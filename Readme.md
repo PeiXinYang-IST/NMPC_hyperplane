@@ -14,3 +14,9 @@ ros2 launch nmpc_tracker nmpc_test_launch.py
 ### python demo
 cd scripts
 python3 test.py
+
+
+N_PARAM 25 
+N_HORIZON 60
+DT 0.05
+REF_VEL 7.0  

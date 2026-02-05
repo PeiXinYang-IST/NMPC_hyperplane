@@ -565,13 +565,13 @@ void racing_control_hyperplane_acados_setup_nlp_in(racing_control_hyperplane_sol
 
    double* W_0 = calloc(NY0*NY0, sizeof(double));
     // change only the non-zero elements:
-    W_0[0+(NY0) * 0] = 20;
-    W_0[1+(NY0) * 1] = 20;
-    W_0[2+(NY0) * 2] = 10;
-    W_0[3+(NY0) * 3] = 0.5;
-    W_0[4+(NY0) * 4] = 0.1;
-    W_0[5+(NY0) * 5] = 0.1;
-    W_0[6+(NY0) * 6] = 5;
+    W_0[0+(NY0) * 0] = 50;
+    W_0[1+(NY0) * 1] = 50;
+    W_0[2+(NY0) * 2] = 5;
+    W_0[3+(NY0) * 3] = 0.01;
+    W_0[4+(NY0) * 4] = 0.01;
+    W_0[5+(NY0) * 5] = 0.01;
+    W_0[6+(NY0) * 6] = 1;
     ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, 0, "W", W_0);
     free(W_0);
     double* yref = calloc(NY, sizeof(double));
@@ -584,13 +584,13 @@ void racing_control_hyperplane_acados_setup_nlp_in(racing_control_hyperplane_sol
     free(yref);
     double* W = calloc(NY*NY, sizeof(double));
     // change only the non-zero elements:
-    W[0+(NY) * 0] = 20;
-    W[1+(NY) * 1] = 20;
-    W[2+(NY) * 2] = 10;
-    W[3+(NY) * 3] = 0.5;
-    W[4+(NY) * 4] = 0.1;
-    W[5+(NY) * 5] = 0.1;
-    W[6+(NY) * 6] = 5;
+    W[0+(NY) * 0] = 50;
+    W[1+(NY) * 1] = 50;
+    W[2+(NY) * 2] = 5;
+    W[3+(NY) * 3] = 0.01;
+    W[4+(NY) * 4] = 0.01;
+    W[5+(NY) * 5] = 0.01;
+    W[6+(NY) * 6] = 1;
 
     for (int i = 1; i < N; i++)
     {
@@ -604,8 +604,8 @@ void racing_control_hyperplane_acados_setup_nlp_in(racing_control_hyperplane_sol
 
     double* W_e = calloc(NYN*NYN, sizeof(double));
     // change only the non-zero elements:
-    W_e[0+(NYN) * 0] = 5;
-    W_e[1+(NYN) * 1] = 5;
+    W_e[0+(NYN) * 0] = 100;
+    W_e[1+(NYN) * 1] = 100;
     W_e[2+(NYN) * 2] = 2;
     W_e[3+(NYN) * 3] = 0.5;
     ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, N, "W", W_e);
@@ -712,10 +712,10 @@ void racing_control_hyperplane_acados_setup_nlp_in(racing_control_hyperplane_sol
     double* lubu = calloc(2*NBU, sizeof(double));
     double* lbu = lubu;
     double* ubu = lubu + NBU;
-    lbu[0] = -1;
-    ubu[0] = 1;
-    lbu[1] = -0.5;
-    ubu[1] = 0.5;
+    lbu[0] = -1.5;
+    ubu[0] = 1.5;
+    lbu[1] = -0.75;
+    ubu[1] = 0.75;
 
     for (int i = 0; i < N; i++)
     {
@@ -740,9 +740,9 @@ void racing_control_hyperplane_acados_setup_nlp_in(racing_control_hyperplane_sol
     double* lubx = calloc(2*NBX, sizeof(double));
     double* lbx = lubx;
     double* ubx = lubx + NBX;
-    ubx[0] = 5;
-    lbx[1] = -1.5;
-    ubx[1] = 1.5;
+    ubx[0] = 7;
+    lbx[1] = -2.5;
+    ubx[1] = 2.5;
 
     for (int i = 1; i < N; i++)
     {

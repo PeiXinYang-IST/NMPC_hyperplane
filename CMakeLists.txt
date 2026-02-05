@@ -39,7 +39,9 @@ target_link_libraries(nmpc_node
 install(DIRECTORY launch
   DESTINATION share/${PROJECT_NAME}
 )
-
+install(TARGETS nmpc_node
+  DESTINATION lib/${PROJECT_NAME}
+)
 install(PROGRAMS
   scripts/simulation.py
   scripts/path_publisher.py

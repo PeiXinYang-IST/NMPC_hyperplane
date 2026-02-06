@@ -1,7 +1,7 @@
 ### acados生成c code
 cd scripts
 python3 generate_c.py
-
+echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/mnt/c/Users/yang/Downloads/acados/lib' >> ~/.bashrc
 ### 编译
 cd ..
 colcon build
@@ -15,8 +15,3 @@ ros2 launch nmpc_tracker nmpc_test_launch.py
 cd scripts
 python3 test.py
 
-
-N_PARAM 25 
-N_HORIZON 60
-DT 0.05
-REF_VEL 7.0  

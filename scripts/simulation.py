@@ -137,11 +137,11 @@ class SimulationEnv(Node):
         visible_points = []
         
         # A. 附近的道路
-        for p in self.static_road_points:
-            if (p[0] - self.state[0])**2 + (p[1] - self.state[1])**2 < 625.0: # 25m 半径
-                nx = p[0] + np.random.normal(0, 0.02)
-                ny = p[1] + np.random.normal(0, 0.02)
-                visible_points.append([nx, ny, 0.0])
+        # for p in self.static_road_points:
+        #     if (p[0] - self.state[0])**2 + (p[1] - self.state[1])**2 < 625.0: # 25m 半径
+        #         nx = p[0] + np.random.normal(0, 0.02)
+        #         ny = p[1] + np.random.normal(0, 0.02)
+        #         visible_points.append([nx, ny, 0.0])
         
         # B. 附近的车辆 (全加进去，因为车辆少)
         visible_points.extend(traffic_points)

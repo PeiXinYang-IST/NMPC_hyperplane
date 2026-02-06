@@ -25,8 +25,12 @@ file(GLOB TOP_C "${GEN_CODE_DIR}/*.c")
 list(FILTER TOP_C EXCLUDE REGEX ".*main.*")
 file(GLOB_RECURSE MODEL_C "${GEN_CODE_DIR}/*_model/*.c" "${GEN_CODE_DIR}/*_cost/*.c" "${GEN_CODE_DIR}/*_constraints/*.c")
 
-add_executable(nmpc_node src/nmpc_node.cpp ${TOP_C} ${MODEL_C})
-
+add_executable(nmpc_node
+  src/main.cpp
+  src/nmpc_tracker_node.cpp  
+  ${TOP_C}    # Acados 接口实现
+  ${MODEL_C}  # 具体的模型/代价/约束函数实现
+)
 ament_target_dependencies(nmpc_node 
     rclcpp nav_msgs sensor_msgs geometry_msgs visualization_msgs 
     tf2 tf2_geometry_msgs tf2_ros

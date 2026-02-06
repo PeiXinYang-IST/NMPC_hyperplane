@@ -3,7 +3,7 @@ import numpy as np
 import casadi as ca
 from acados_template import AcadosOcp, AcadosOcpSolver, AcadosModel
 
-def export_race_model(n_obstacles=3):
+def export_race_model(n_obstacles=5):
     model_name = 'racing_control_hyperplane'
     
     # --- 状态变量 (States) ---
@@ -99,12 +99,12 @@ def setup_ocp(N_horizon=60, Tf=3.0):
 
     # --- 状态与控制约束 (Bounds) ---
     ocp.constraints.idxbx = np.array([3, 4])   # 针对 vx, omega 设置状态约束
-    ocp.constraints.lbx = np.array([0.0, -2.5]) # 速度下限 0, 最小角速度 -1.5
-    ocp.constraints.ubx = np.array([7.0, 2.5])  # 速度上限 5, 最大角速度 1.5
+    ocp.constraints.lbx = np.array([0.0, -2.5]) # 速度下限 0, 最小角速度 -2.5
+    ocp.constraints.ubx = np.array([7.0, 2.5])  # 速度上限 7, 最大角速度 2.5
     
     ocp.constraints.idxbu = np.array([0, 1])   # 针对 ax, alpha 设置控制约束
-    ocp.constraints.lbu = np.array([-1.5, -0.75]) # 最大刹车 -1.0, 最大转角速率 -0.5
-    ocp.constraints.ubu = np.array([1.5, 0.75])  # 最大加速 1.0, 最大转角速率 0.5
+    ocp.constraints.lbu = np.array([-1.5, -0.75]) # 最大刹车 -1.5, 最大转角速率 -0.75
+    ocp.constraints.ubu = np.array([1.5, 0.75])  # 最大加速 1.5, 最大转角速率 0.75
     
     ocp.constraints.x0 = np.zeros(nx) # 初始状态占位
 

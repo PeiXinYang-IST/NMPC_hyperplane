@@ -4,6 +4,9 @@
     nmpc_config:
       ref_velocity: 5.0             # 期望巡航速度 (m/s)
       control_loop_ms: 50           # 控制循环周期 (毫秒)
+    track:
+      road_half_width: 5.0
+      use_virtual_walls: true
     perception:
       dbscan_eps: 1.2               # DBSCAN 邻域搜索半径
       dbscan_min_pts: 3             # 形成簇所需的最小点数
@@ -11,9 +14,9 @@
 
     obstacle_avoidance:
       max_obstacles: 5              # 求解器支持的最大障碍物数量
-      base_margin: 0.75              # 基础安全距离/机器人半径 (米)
-      speed_gain: 0.2              # 随速度增加的动态裕度增益
-      smoothing_alpha: 0.3          # 法向量一阶低通滤波系数 (0-1)
+      base_margin: 1.0              # 基础安全距离/机器人半径 (米)
+      speed_gain: 0.1              # 随速度增加的动态裕度增益
+      smoothing_alpha: 0.2          # 法向量一阶低通滤波系数 (0-1)
       invalid_obs_pos: -100.0       # 无效/远端障碍物的占位坐标
       norm_epsilon: 0.01            # 防止向量归一化除零的极小值
 

@@ -1,3 +1,6 @@
+### demo见pic文件夹
+
+
 ### acados生成c code
 cd scripts
 python3 generate_c.py

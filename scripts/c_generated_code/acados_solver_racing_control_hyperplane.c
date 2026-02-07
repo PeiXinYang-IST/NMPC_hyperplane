@@ -565,12 +565,12 @@ void racing_control_hyperplane_acados_setup_nlp_in(racing_control_hyperplane_sol
 
    double* W_0 = calloc(NY0*NY0, sizeof(double));
     // change only the non-zero elements:
-    W_0[0+(NY0) * 0] = 100;
-    W_0[1+(NY0) * 1] = 100;
+    W_0[0+(NY0) * 0] = 50;
+    W_0[1+(NY0) * 1] = 50;
     W_0[2+(NY0) * 2] = 1;
-    W_0[3+(NY0) * 3] = 0.01;
-    W_0[4+(NY0) * 4] = 0.01;
-    W_0[5+(NY0) * 5] = 0.01;
+    W_0[3+(NY0) * 3] = 1;
+    W_0[4+(NY0) * 4] = 1;
+    W_0[5+(NY0) * 5] = 1;
     W_0[6+(NY0) * 6] = 1;
     ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, 0, "W", W_0);
     free(W_0);
@@ -584,12 +584,12 @@ void racing_control_hyperplane_acados_setup_nlp_in(racing_control_hyperplane_sol
     free(yref);
     double* W = calloc(NY*NY, sizeof(double));
     // change only the non-zero elements:
-    W[0+(NY) * 0] = 100;
-    W[1+(NY) * 1] = 100;
+    W[0+(NY) * 0] = 50;
+    W[1+(NY) * 1] = 50;
     W[2+(NY) * 2] = 1;
-    W[3+(NY) * 3] = 0.01;
-    W[4+(NY) * 4] = 0.01;
-    W[5+(NY) * 5] = 0.01;
+    W[3+(NY) * 3] = 1;
+    W[4+(NY) * 4] = 1;
+    W[5+(NY) * 5] = 1;
     W[6+(NY) * 6] = 1;
 
     for (int i = 1; i < N; i++)
@@ -604,8 +604,8 @@ void racing_control_hyperplane_acados_setup_nlp_in(racing_control_hyperplane_sol
 
     double* W_e = calloc(NYN*NYN, sizeof(double));
     // change only the non-zero elements:
-    W_e[0+(NYN) * 0] = 100;
-    W_e[1+(NYN) * 1] = 100;
+    W_e[0+(NYN) * 0] = 50;
+    W_e[1+(NYN) * 1] = 50;
     W_e[2+(NYN) * 2] = 2;
     W_e[3+(NYN) * 3] = 0.5;
     ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, N, "W", W_e);
@@ -630,26 +630,26 @@ void racing_control_hyperplane_acados_setup_nlp_in(racing_control_hyperplane_sol
     double* zl = zlumem+NS*2;
     double* zu = zlumem+NS*3;
     // change only the non-zero elements:
-    Zl[0] = 1000;
-    Zl[1] = 1000;
-    Zl[2] = 1000;
-    Zl[3] = 1000;
-    Zl[4] = 1000;
-    Zu[0] = 1000;
-    Zu[1] = 1000;
-    Zu[2] = 1000;
-    Zu[3] = 1000;
-    Zu[4] = 1000;
-    zl[0] = 1000;
-    zl[1] = 1000;
-    zl[2] = 1000;
-    zl[3] = 1000;
-    zl[4] = 1000;
-    zu[0] = 1000;
-    zu[1] = 1000;
-    zu[2] = 1000;
-    zu[3] = 1000;
-    zu[4] = 1000;
+    Zl[0] = 10000;
+    Zl[1] = 10000;
+    Zl[2] = 10000;
+    Zl[3] = 10000;
+    Zl[4] = 10000;
+    Zu[0] = 10000;
+    Zu[1] = 10000;
+    Zu[2] = 10000;
+    Zu[3] = 10000;
+    Zu[4] = 10000;
+    zl[0] = 10000;
+    zl[1] = 10000;
+    zl[2] = 10000;
+    zl[3] = 10000;
+    zl[4] = 10000;
+    zu[0] = 10000;
+    zu[1] = 10000;
+    zu[2] = 10000;
+    zu[3] = 10000;
+    zu[4] = 10000;
 
     for (int i = 1; i < N; i++)
     {

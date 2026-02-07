@@ -14,7 +14,7 @@
 
     obstacle_avoidance:
       max_obstacles: 5              # 求解器支持的最大障碍物数量
-      base_margin: 1.5              # 基础安全距离/机器人半径 (米)
+      base_margin: 1.0              # 基础安全距离/机器人半径 (米)
       speed_gain: 0.05              # 随速度增加的动态裕度增益
       smoothing_alpha: 0.1          # 法向量一阶低通滤波系数 (0-1)
       invalid_obs_pos: -100.0       # 无效/远端障碍物的占位坐标

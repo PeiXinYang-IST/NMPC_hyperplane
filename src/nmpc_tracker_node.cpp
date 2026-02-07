@@ -27,7 +27,6 @@ NmpcTrackerNode::NmpcTrackerNode() : Node("nmpc_node") {
     this->declare_parameter("robot_limits.max_angular_velocity", 2.5);
     this->declare_parameter("robot_limits.min_angular_velocity", -2.5);
 
-    // --- 初始化 Acados ---
     capsule_ = racing_control_hyperplane_acados_create_capsule();
     racing_control_hyperplane_acados_create(capsule_);
 
@@ -44,7 +43,7 @@ NmpcTrackerNode::NmpcTrackerNode() : Node("nmpc_node") {
     astar_planner_ = std::make_unique<AStarPlanner>(astar_cfg);
 
     setup_ros_interfaces();
-    RCLCPP_INFO(this->get_logger(), "NMPC Tracker Initialized: Smart Goal Adjustment Mode.");
+    RCLCPP_INFO(this->get_logger(), "NMPC Tracker Initialized: Full Vis & Always Margin Mode.");
 }
 
 NmpcTrackerNode::~NmpcTrackerNode() {
@@ -61,6 +60,7 @@ void NmpcTrackerNode::solve_cycle() {
 
     if (!odom_ok_ || !path_ok_ || full_path_.poses.empty()) return;
 
+    // 1. 获取参数
     double target_ref_vel = this->get_parameter("nmpc_config.ref_velocity").as_double();
     double road_half_width = this->get_parameter("track.road_half_width").as_double();
     bool use_virtual_walls = this->get_parameter("track.use_virtual_walls").as_bool();
@@ -81,6 +81,7 @@ void NmpcTrackerNode::solve_cycle() {
         ocp_nlp_out_set(conf, dims, out, in, i, "u", ut);
     }
 
+    // 提前获取障碍物点云
     std::vector<Point> all_obs_pts = get_all_obstacle_points(); 
 
     int closest_idx = get_closest_path_index(cur_x_[0], cur_x_[1]);
@@ -96,7 +97,7 @@ void NmpcTrackerNode::solve_cycle() {
         target_idx++;
     }
 
-    // 如果选定的 target_idx 刚好在障碍物里，A* 会死循环。这里我们沿着路径向前找，直到找到一个安全点。
+    // Smart Goal Adjustment: 目标点碰撞检测与前向延申
     if (!all_obs_pts.empty()) {
         double margin_sq = base_margin * base_margin; // 碰撞检测阈值
         int search_limit_idx = std::min((int)full_path_.poses.size() - 1, target_idx + 600); // 限制搜索范围
@@ -111,16 +112,15 @@ void NmpcTrackerNode::solve_cycle() {
             return true; // 安全
         };
 
-        // 如果当前点不安全，就向前移动 target_idx
         while (target_idx < search_limit_idx) {
             double tx = full_path_.poses[target_idx].pose.position.x;
             double ty = full_path_.poses[target_idx].pose.position.y;
             
             if (check_point_safe(tx, ty)) {
-                break; // 找到安全点了，跳出循环，target_idx 现在是安全的
+                break; // 找到安全点了
             }
             
-            target_idx += 5; // 步进搜索，稍微跳跃一点加快速度
+            target_idx += 5; // 步进搜索
         }
     }
 
@@ -128,9 +128,6 @@ void NmpcTrackerNode::solve_cycle() {
     double goal_x = full_path_.poses[target_idx].pose.position.x;
     double goal_y = full_path_.poses[target_idx].pose.position.y;
 
-    // -----------------------------------------------------------------
-    //                  [计时区块 1] A* 引导
-    // -----------------------------------------------------------------
     auto start_astar = std::chrono::high_resolution_clock::now();
 
     std::vector<Point> guide_path;     
@@ -153,9 +150,7 @@ void NmpcTrackerNode::solve_cycle() {
         }
     }
 
-    // 重规划
-    if (!reused_old && !all_obs_pts.empty()) {
-        // 使用调整后的 goal_x, goal_y 进行规划
+    if (!reused_old) {
         raw_astar_path = astar_planner_->plan(
             cur_x_[0], cur_x_[1], goal_x, goal_y, all_obs_pts, last_guide_path_
         );
@@ -188,14 +183,17 @@ void NmpcTrackerNode::solve_cycle() {
     auto end_astar = std::chrono::high_resolution_clock::now();
     t_astar = std::chrono::duration<double, std::milli>(end_astar - start_astar).count();
 
-    // -----------------------------------------------------------------
-    //                  [计时区块 2] 构建问题 (Cost + 超平面)
-    // -----------------------------------------------------------------
     auto start_prep = std::chrono::high_resolution_clock::now();
 
     std::vector<NmpcVisualizer::VizObs> all_constraint_viz;
     std::vector<std::pair<double, double>> target_path_viz; 
     std::vector<std::pair<double, double>> astar_guide_viz; 
+
+    if (!guide_path.empty()) {
+        for (const auto& p : guide_path) {
+            astar_guide_viz.push_back({p.x, p.y});
+        }
+    }
 
     double last_yaw_ref = cur_x_[2]; 
 
@@ -226,8 +224,6 @@ void NmpcTrackerNode::solve_cycle() {
         std::vector<ObstacleParam> step_obs;
         int guide_idx = std::min(i, (int)guide_path.size() - 1);
         Point guide_seed = guide_path[guide_idx];
-        
-        if (astar_success) astar_guide_viz.push_back({guide_seed.x, guide_seed.y});
 
         if (use_virtual_walls) {
             double cy = std::cos(ref_yaw); double sy = std::sin(ref_yaw);
@@ -248,10 +244,12 @@ void NmpcTrackerNode::solve_cycle() {
             }
         }
 
-        if (astar_success && !all_obs_pts.empty()) {
+        if (!all_obs_pts.empty()) {
             ObstacleParam p = HyperplaneUtil::fit_obstacle(all_obs_pts, guide_seed.x, guide_seed.y, base_margin);
+            // 距离检测，只对附近的障碍物生效
             if (std::hypot(p.ox - guide_seed.x, p.oy - guide_seed.y) < 6.0) {
                  step_obs.push_back(p);
+                 // 始终可视化
                  if (i % 5 == 0) { 
                      NmpcVisualizer::VizObs vo; 
                      vo.id = 50000 + i; vo.param = p; vo.is_active = true; vo.alpha = 0.6; 
@@ -269,9 +267,6 @@ void NmpcTrackerNode::solve_cycle() {
     auto end_prep = std::chrono::high_resolution_clock::now();
     t_obs_prep = std::chrono::duration<double, std::milli>(end_prep - start_prep).count();
 
-    // -----------------------------------------------------------------
-    //                  [计时区块 3] QP 求解
-    // -----------------------------------------------------------------
     if (is_first_run_) {
         for (int i = 0; i <= N_HORIZON; i++) {
             ocp_nlp_out_set(conf, dims, out, in, i, "x", cur_x_);
@@ -288,10 +283,6 @@ void NmpcTrackerNode::solve_cycle() {
     int status = racing_control_hyperplane_acados_solve(capsule_);
     auto end_solve = std::chrono::high_resolution_clock::now();
     t_solve = std::chrono::duration<double, std::milli>(end_solve - start_solve).count();
-
-    // -----------------------------------------------------------------
-    //                  结果统计与打印
-    // -----------------------------------------------------------------
     
     auto end_total = std::chrono::high_resolution_clock::now();
     double t_total = std::chrono::duration<double, std::milli>(end_total - start_total).count();
@@ -299,6 +290,7 @@ void NmpcTrackerNode::solve_cycle() {
     std_msgs::msg::Float32 time_msg; time_msg.data = t_total;
     pub_solve_time_->publish(time_msg);
 
+    // 状态显示逻辑：因为强制运行 A*，所以只要 astar_success 就是 Plan 或 Reuse
     std::string astar_str = astar_success ? (reused_old ? "Reuse" : "Plan") : "Fail";
     
     char log_buf[256];
@@ -323,9 +315,7 @@ void NmpcTrackerNode::solve_cycle() {
         render_visualization(conf, dims, out, all_constraint_viz, target_path_viz, astar_guide_viz, goal_x, goal_y);
     }
 }
-// -----------------------------------------------------------------
-//                  辅助函数
-// -----------------------------------------------------------------
+
 std::vector<Point> NmpcTrackerNode::get_all_obstacle_points() {
     std::lock_guard<std::mutex> lock(cluster_mutex_);
     std::vector<Point> all_pts;

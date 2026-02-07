@@ -49,6 +49,7 @@ install(TARGETS nmpc_node
 install(PROGRAMS
   scripts/simulation.py
   scripts/path_publisher.py
+  scripts/cubic_spline.py
   DESTINATION lib/${PROJECT_NAME}
 )
 ament_package()

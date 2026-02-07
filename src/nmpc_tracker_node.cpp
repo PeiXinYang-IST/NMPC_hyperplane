@@ -484,6 +484,7 @@ void NmpcTrackerNode::setup_ros_interfaces() {
             cur_x_[3] = msg->twist.twist.linear.x; cur_x_[4] = msg->twist.twist.angular.z;
             odom_ok_ = true;
         });
+        
     sub_cloud_ = create_subscription<sensor_msgs::msg::PointCloud2>("/scan_cloud", 10, 
         [this](const sensor_msgs::msg::PointCloud2::SharedPtr msg) {
             std::vector<Point> pts;

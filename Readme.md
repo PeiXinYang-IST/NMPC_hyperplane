@@ -1,11 +1,15 @@
 ### demo见pic文件夹
+
 ![运行示意图](https://github.com/PeiXinYang-IST/NMPC_hyperplane/blob/main/pic/image.png)  
 
 ### acados生成c code
+
 cd scripts
 python3 generate_c.py
 echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/mnt/c/Users/yang/Downloads/acados/lib' >> ~/.bashrc
+
 ### 编译
+
 cd ..
 colcon build
 

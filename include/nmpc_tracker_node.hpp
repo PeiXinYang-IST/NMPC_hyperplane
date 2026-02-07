@@ -18,10 +18,12 @@
 #include <algorithm>
 #include <string>
 
+// Acados Solver Header
 extern "C" {
     #include "acados_solver_racing_control_hyperplane.h"
 }
 
+// User Defined Headers
 #include "dbscan.hpp"
 #include "hyperplane_util.hpp"
 #include "nmpc_visualizer.hpp"
@@ -33,22 +35,32 @@ public:
     ~NmpcTrackerNode();
 
 private:
+    // --- 核心控制循环 ---
     void solve_cycle();
+
+    // --- 辅助函数 ---
     double unwrap_yaw(double target_yaw, double current_yaw);
     int get_closest_path_index(double x, double y);
     bool is_in_fov(double ox, double oy);
 
-    // 依然保留平滑函数，用于处理额外的动态障碍物（如果有的话）
+    std::vector<Point> get_all_obstacle_points();
+    bool check_path_collision(const std::vector<Point>& path, double margin);
+    std::vector<Point> prune_path_by_distance(const std::vector<Point>& path, double curr_x, double curr_y, double lookahead_dist);
     void apply_normal_smoothing(ObstacleParam& p, const std::string& key, double alpha, double max_rot_rad);
-    void clean_old_normals(const std::vector<int>& active_ids);
 
+    // --- ROS 接口 ---
     void setup_ros_interfaces();
     void publish_command(ocp_nlp_config* conf, ocp_nlp_dims* dims, ocp_nlp_out* out);
     void publish_emergency_brake();
+    
+    // [修改] 增加 goal_x, goal_y 参数用于可视化
     void render_visualization(ocp_nlp_config* conf, ocp_nlp_dims* dims, ocp_nlp_out* out, 
                               const std::vector<NmpcVisualizer::VizObs>& constraint_viz, 
-                              const std::vector<std::pair<double, double>>& target_path);
+                              const std::vector<std::pair<double, double>>& target_path_viz,
+                              const std::vector<std::pair<double, double>>& astar_guide_viz,
+                              double goal_x, double goal_y);
 
+    // --- 成员变量 ---
     racing_control_hyperplane_solver_capsule* capsule_;
     std::unique_ptr<NmpcVisualizer> visualizer_;
     std::unique_ptr<DBSCAN> cluster_worker_;
@@ -67,7 +79,10 @@ private:
     std::map<int, std::vector<Point>> current_clusters_;
     std::map<std::string, std::pair<double, double>> prev_normal_map_;
     
-    double cur_x_[5]; 
+    // 缓存上一帧 A* 路径
+    std::vector<Point> last_guide_path_;
+
+    double cur_x_[5]; // [x, y, yaw, v, w]
     nav_msgs::msg::Path full_path_;
     bool odom_ok_ = false;
     bool path_ok_ = false;

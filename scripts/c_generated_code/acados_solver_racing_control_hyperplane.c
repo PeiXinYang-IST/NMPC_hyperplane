@@ -565,9 +565,9 @@ void racing_control_hyperplane_acados_setup_nlp_in(racing_control_hyperplane_sol
 
    double* W_0 = calloc(NY0*NY0, sizeof(double));
     // change only the non-zero elements:
-    W_0[0+(NY0) * 0] = 50;
-    W_0[1+(NY0) * 1] = 50;
-    W_0[2+(NY0) * 2] = 5;
+    W_0[0+(NY0) * 0] = 100;
+    W_0[1+(NY0) * 1] = 100;
+    W_0[2+(NY0) * 2] = 1;
     W_0[3+(NY0) * 3] = 0.01;
     W_0[4+(NY0) * 4] = 0.01;
     W_0[5+(NY0) * 5] = 0.01;
@@ -584,9 +584,9 @@ void racing_control_hyperplane_acados_setup_nlp_in(racing_control_hyperplane_sol
     free(yref);
     double* W = calloc(NY*NY, sizeof(double));
     // change only the non-zero elements:
-    W[0+(NY) * 0] = 50;
-    W[1+(NY) * 1] = 50;
-    W[2+(NY) * 2] = 5;
+    W[0+(NY) * 0] = 100;
+    W[1+(NY) * 1] = 100;
+    W[2+(NY) * 2] = 1;
     W[3+(NY) * 3] = 0.01;
     W[4+(NY) * 4] = 0.01;
     W[5+(NY) * 5] = 0.01;

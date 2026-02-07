@@ -34,6 +34,13 @@ def generate_launch_description():
         # Python 路径发布节点
         Node(package='nmpc_tracker', executable='path_publisher.py', output='screen', env=env),
         
-        Node(package='rviz2', executable='rviz2', output='screen'),
+        Node(
+    package='rviz2',
+    executable='rviz2',
+    name='rviz2',
+    output='screen',
+    # This forces RViz to start with a clean, default config
+    arguments=['-d', ''] 
+)
 
     ])

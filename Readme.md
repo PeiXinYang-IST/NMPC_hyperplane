@@ -1,5 +1,5 @@
 ### demo见pic文件夹
-![运行示意图](https://github.com/PeiXinYang-IST/NMPC_hyperplane/blob/main/pic/image1.png)  
+![运行示意图](https://github.com/PeiXinYang-IST/NMPC_hyperplane/blob/main/pic/image.png)  
 
 ### acados生成c code
 cd scripts

@@ -15,7 +15,7 @@ struct GridNode {
     double g_cost, h_cost;
     GridNode* parent = nullptr;
     double f_cost() const { return g_cost + h_cost; }
-    bool operator>(const GridNode& other) const { return f_cost() > other.f_cost(); }
+    bool operator>(const GridNode& other) const { return f_cost() > other.f_cost(); } 
 };
 
 class AStarPlanner {
@@ -69,7 +69,7 @@ public:
         return resampled;
     }
 
-    // --- 修改：增加可选的历史路径输入 ---
+    // --- 增加可选的历史路径输入 ---
     std::vector<Point> plan(double start_x, double start_y, 
                             double goal_x, double goal_y, 
                             const std::vector<Point>& all_points,
@@ -102,7 +102,6 @@ public:
             }
         }
 
-        // [新增] 预处理历史路径到栅格坐标，加速查询
         std::vector<std::pair<int, int>> history_grid_pts;
         if (!history_path.empty()) {
             for(const auto& p : history_path) {
@@ -127,7 +126,6 @@ public:
 private:
     Config cfg_;
 
-    // [修改] A* 核心逻辑增加 history bias
     std::vector<Point> run_astar(int sx, int sy, int gx, int gy, int w, int h, 
                                  const std::vector<int8_t>& grid, int min_gx, int min_gy,
                                  const std::vector<std::pair<int, int>>& history_pts) 
@@ -163,7 +161,6 @@ private:
                 // 计算基础移动代价
                 double step_cost = move_cost[i];
                 
-                // [关键] 计算历史路径偏好代价 (History Bias)
                 // 如果当前点离历史路径越远，代价越高
                 if (!history_pts.empty()) {
                     double min_dist_sq = 1e9;

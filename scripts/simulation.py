@@ -179,7 +179,7 @@ class SimulationEnv(Node):
         return world_pts
 
     def cmd_cb(self, msg):
-        self.state[3] = msg.linear.x
+        self.state[3] = msg.linear.x * 0.95
         self.state[4] = msg.angular.z
 
     def update_and_publish(self):

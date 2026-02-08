@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 import rclpy
 from rclpy.node import Node
-from nav_msgs.msg import Path
+from nav_msgs.msg import Path, Odometry
 from geometry_msgs.msg import PoseStamped
 import numpy as np
 
 class TrackGenerator:
-    """ 赛道生成器：支持直线、圆弧拼接 """
+    """ 赛道生成器：支持直线、圆弧拼接 (保持不变) """
     def __init__(self, resolution=0.2):
         self.resolution = resolution
         # 存储航点 [x, y, yaw, cumulative_dist]
@@ -55,53 +55,91 @@ class TrackGenerator:
 class GlobalPathPublisher(Node):
     def __init__(self):
         super().__init__('global_path_publisher')
-        self.pub_path = self.create_publisher(Path, '/ref_path', 10)
-        self.timer = self.create_timer(1.0, self.publish_path) 
         
-        # --- 生成复杂赛道 ---
-        self.track_gen = TrackGenerator(resolution=0.2)
+        # 1. 路径发布者
+        self.pub_path = self.create_publisher(Path, '/ref_path', 10)
+        
+        # 2. 里程计订阅者 (获取当前位置)
+        self.sub_odom = self.create_subscription(Odometry, '/odom', self.odom_callback, 10)
+        
+        # 3. 定时器 (控制发布频率，例如 10Hz)
+        self.timer = self.create_timer(0.05, self.publish_path) 
+        
+        # 4. 生成赛道
+        self.resolution = 0.2
+        self.track_gen = TrackGenerator(resolution=self.resolution)
         self.generate_complex_track()
-        self.get_logger().info('Complex Global Path Publisher Initialized.')
+        
+        # 状态变量
+        self.robot_x = None
+        self.robot_y = None
+        self.lookahead_dist = 150.0 # 截取距离 (米)
+        
+        self.get_logger().info('Local Window Path Publisher Initialized.')
 
     def generate_complex_track(self):
-        # 1. 起步直道 (50m)
+        # ... (赛道生成逻辑保持不变) ...
         self.track_gen.add_straight(50.0)
-        # 2. 90度急左转 (R=15m)
         self.track_gen.add_turn(90, 15.0, 'left')
-        # 3. 短直道 (20m)
         self.track_gen.add_straight(20.0)
-        # 4. 90度急右转 (R=15m)
         self.track_gen.add_turn(90, 15.0, 'right')
-        # 5. 长直道 (40m)
         self.track_gen.add_straight(400.0)
-        # 6. 180度大回环 (R=25m)
         self.track_gen.add_turn(180, 205.0, 'left')
-        # 7. S弯 (连续弯道)
         self.track_gen.add_turn(45, 200.0, 'right')
         self.track_gen.add_turn(45, 200.0, 'left')
-        # 8. 终点直道
         self.track_gen.add_straight(15000.0)
         
         self.track_points = self.track_gen.get_path()
 
+    def odom_callback(self, msg):
+        """ 更新机器人当前位置 """
+        self.robot_x = msg.pose.pose.position.x
+        self.robot_y = msg.pose.pose.position.y
+
     def publish_path(self):
-        path = Path()
-        path.header.stamp = self.get_clock().now().to_msg()
-        path.header.frame_id = 'map'
+        # 如果还没收到里程计数据，暂不发布（或者发布全路径，视需求而定）
+        if self.robot_x is None or self.robot_y is None:
+            return
+
+        # 1. 寻找最近点索引
+        # 计算所有点到当前位置的欧氏距离
+        # (注意：如果路径点非常多，数万个点，这里可以使用 KD-Tree 优化，或者只搜索上一次索引附近的窗口)
+        dx = self.track_points[:, 0] - self.robot_x
+        dy = self.track_points[:, 1] - self.robot_y
+        dists = np.hypot(dx, dy)
+        closest_idx = np.argmin(dists)
+
+        # 2. 计算截取范围
+        # 需要截取的点数 = 距离 / 分辨率
+        num_points = int(self.lookahead_dist / self.resolution)
         
-        for p in self.track_points:
+        end_idx = closest_idx + num_points
+        
+        # 3. 截取路径 (处理数组越界情况，Python切片会自动处理越界，但为了逻辑清晰)
+        # 获取从最近点开始的切片
+        path_segment = self.track_points[closest_idx : end_idx]
+
+        # 4. 构建 ROS 消息
+        path_msg = Path()
+        path_msg.header.stamp = self.get_clock().now().to_msg()
+        # 注意：这里我们假设全局路径和odom是在同一个坐标系下 (通常是 'odom' 或 'map')
+        # 如果你在 rviz 里看，Fixed Frame 要选对
+        path_msg.header.frame_id = 'map' 
+        
+        for p in path_segment:
             pose = PoseStamped()
+            pose.header = path_msg.header
             pose.pose.position.x = p[0]
             pose.pose.position.y = p[1]
             
-            # 计算四元数 (虽然通常 Controller 自己会算，但发出去更好看)
+            # 简单的 Yaw 转 Quaternion
             yaw = p[2]
             pose.pose.orientation.z = np.sin(yaw / 2.0)
             pose.pose.orientation.w = np.cos(yaw / 2.0)
             
-            path.poses.append(pose)
+            path_msg.poses.append(pose)
             
-        self.pub_path.publish(path)
+        self.pub_path.publish(path_msg)
 
 def main():
     rclpy.init()

@@ -1,90 +1,160 @@
 #include "nmpc_tracker_node.hpp"
 #include <sensor_msgs/point_cloud2_iterator.hpp>
 #include <chrono> 
+#include <cmath>
 
 #define N_PARAM 25    
 #define N_HORIZON 60  
 #define DT 0.05       
 
 NmpcTrackerNode::NmpcTrackerNode() : Node("nmpc_node") {
+    // NMPC 基础配置
     this->declare_parameter("nmpc_config.ref_velocity", 5.0);
     this->declare_parameter("nmpc_config.control_loop_ms", 50);
+    this->declare_parameter("nmpc_config.enable_warm_start", true); 
     
+    // 赛道与感知配置
     this->declare_parameter("track.road_half_width", 5.0); 
     this->declare_parameter("track.use_virtual_walls", true);
-
     this->declare_parameter("perception.dbscan_eps", 1.2);
     this->declare_parameter("perception.dbscan_min_pts", 3);
     this->declare_parameter("perception.fov_half_angle_deg", 120.0);
     
+    // 避障配置
     this->declare_parameter("obstacle_avoidance.max_obstacles", 5);
     this->declare_parameter("obstacle_avoidance.base_margin", 0.8); 
     this->declare_parameter("obstacle_avoidance.smoothing_alpha", 0.15); 
     this->declare_parameter("obstacle_avoidance.history_bias_weight", 0.2); 
     
+    // 安全策略配置
+    this->declare_parameter("safety.max_cte_ratio", 0.66);     // 偏离阈值比例 (2/3 路宽)
+    this->declare_parameter("safety.recovery_velocity", 1.0);  // 救车速度 (m/s)
+
+    // 机器人物理限制
     this->declare_parameter("robot_limits.max_linear_velocity", 6.0);
     this->declare_parameter("robot_limits.min_linear_velocity", 0.0);
     this->declare_parameter("robot_limits.max_angular_velocity", 2.5);
     this->declare_parameter("robot_limits.min_angular_velocity", -2.5);
 
+    // ESO (扩张状态观测器) 配置
+    this->declare_parameter("eso.enable", true);        
+    this->declare_parameter("eso.omega_linear", 10.0);  
+    this->declare_parameter("eso.omega_angular", 5.0); 
+    this->declare_parameter("eso.b0_linear", 1.0);      
+    this->declare_parameter("eso.b0_angular", 1.0);     
+
+    // Acados Solver
     capsule_ = racing_control_hyperplane_acados_create_capsule();
     racing_control_hyperplane_acados_create(capsule_);
 
+    // DBSCAN 聚类器
     double eps = this->get_parameter("perception.dbscan_eps").as_double();
     int min_pts = this->get_parameter("perception.dbscan_min_pts").as_int();
     cluster_worker_ = std::make_unique<DBSCAN>(eps, min_pts);
     
+    // 可视化工具
     visualizer_ = std::make_unique<NmpcVisualizer>();
 
+    // A* 规划器
     AStarPlanner::Config astar_cfg;
     astar_cfg.resolution = 0.3; 
     astar_cfg.margin = this->get_parameter("obstacle_avoidance.base_margin").as_double();
     astar_cfg.history_bias_weight = this->get_parameter("obstacle_avoidance.history_bias_weight").as_double();
     astar_planner_ = std::make_unique<AStarPlanner>(astar_cfg);
 
+    // ESO 初始化 (注意 max_dist 设为 10.0 以允许强力补偿)
+    ESO::Config lin_cfg;
+    lin_cfg.dt = DT; 
+    lin_cfg.omega_o = this->get_parameter("eso.omega_linear").as_double();
+    lin_cfg.b0 = this->get_parameter("eso.b0_linear").as_double();
+    lin_cfg.max_dist = 10.0; 
+    linear_eso_ = std::make_unique<ESO>(lin_cfg);
+
+    ESO::Config ang_cfg;
+    ang_cfg.dt = DT;
+    ang_cfg.omega_o = this->get_parameter("eso.omega_angular").as_double();
+    ang_cfg.b0 = this->get_parameter("eso.b0_angular").as_double();
+    ang_cfg.max_dist = 10.0; 
+    angular_eso_ = std::make_unique<ESO>(ang_cfg);
+
     setup_ros_interfaces();
-    RCLCPP_INFO(this->get_logger(), "NMPC Tracker Initialized: Full Vis & Always Margin Mode.");
+    
+    bool enable_eso = this->get_parameter("eso.enable").as_bool();
+    bool enable_ws = this->get_parameter("nmpc_config.enable_warm_start").as_bool();
+    RCLCPP_INFO(this->get_logger(), "NMPC Tracker Ready. [ESO: %s] [WarmStart: %s] [LocalFrame: ON]", 
+        enable_eso ? "ON" : "OFF", enable_ws ? "ON" : "OFF");
 }
 
 NmpcTrackerNode::~NmpcTrackerNode() {
-    racing_control_hyperplane_acados_free(capsule_);
-    racing_control_hyperplane_acados_free_capsule(capsule_);
+    if (capsule_) {
+        racing_control_hyperplane_acados_free(capsule_);
+        racing_control_hyperplane_acados_free_capsule(capsule_);
+    }
 }
 
 void NmpcTrackerNode::solve_cycle() {
-    // [计时] 总耗时开始
     auto start_total = std::chrono::high_resolution_clock::now();
-    double t_astar = 0.0;
-    double t_obs_prep = 0.0;
-    double t_solve = 0.0;
-
+    
     if (!odom_ok_ || !path_ok_ || full_path_.poses.empty()) return;
 
-    // 1. 获取参数
+    double gx = cur_x_[0]; 
+    double gy = cur_x_[1]; 
+    double gyaw = cur_x_[2];
+    double gv = cur_x_[3]; 
+    double gw = cur_x_[4];
+
+    bool enable_eso = this->get_parameter("eso.enable").as_bool();
+    bool enable_warm_start = this->get_parameter("nmpc_config.enable_warm_start").as_bool();
     double target_ref_vel = this->get_parameter("nmpc_config.ref_velocity").as_double();
-    double road_half_width = this->get_parameter("track.road_half_width").as_double();
-    bool use_virtual_walls = this->get_parameter("track.use_virtual_walls").as_bool();
     double base_margin = this->get_parameter("obstacle_avoidance.base_margin").as_double();
-    int max_obs = this->get_parameter("obstacle_avoidance.max_obstacles").as_int();
+    
+    double road_half_width = this->get_parameter("track.road_half_width").as_double();
+    double safe_ratio = this->get_parameter("safety.max_cte_ratio").as_double();
+    double recovery_vel = this->get_parameter("safety.recovery_velocity").as_double();
 
-    auto conf = racing_control_hyperplane_acados_get_nlp_config(capsule_);
-    auto dims = racing_control_hyperplane_acados_get_nlp_dims(capsule_);
-    auto in = racing_control_hyperplane_acados_get_nlp_in(capsule_);
-    auto out = racing_control_hyperplane_acados_get_nlp_out(capsule_);
+    // =========================================================
+    // 1. ESO 观测更新 (Phase 1: Observation)
+    // =========================================================
+    if (enable_eso) {
+        // 静态死区保护：如果长时间静止且无指令，重置积分项
+        if (std::abs(gv) < 0.02 && std::abs(last_cmd_acc_) < 0.01) linear_eso_->reset();
+        else linear_eso_->update(last_cmd_acc_, gv);
 
-    // 2. Warm Start Shift
-    for (int i = 0; i < N_HORIZON; i++) {
-        double xt[5], ut[2];
-        ocp_nlp_out_get(conf, dims, out, i + 1, "x", xt); 
-        ocp_nlp_out_get(conf, dims, out, i, "u", ut);
-        ocp_nlp_out_set(conf, dims, out, in, i, "x", xt);
-        ocp_nlp_out_set(conf, dims, out, in, i, "u", ut);
+        if (std::abs(gw) < 0.02 && std::abs(last_cmd_w_acc_) < 0.01) angular_eso_->reset();
+        else angular_eso_->update(last_cmd_w_acc_, gw);
+    } else {
+        linear_eso_->reset(); 
+        angular_eso_->reset();
+    }
+    double dist_acc_lin = linear_eso_->get_disturbance(); 
+    double dist_acc_ang = angular_eso_->get_disturbance();
+
+    // =========================================================
+    // 2. 全局路径规划 & 安全检查 (Phase 2: Global Planning)
+    // =========================================================
+    // 寻找最近点
+    int closest_idx = get_closest_path_index(gx, gy);
+    
+    // [关键修改] 安全检查：横向偏离 (Cross-Track Error)
+    double path_x = full_path_.poses[closest_idx].pose.position.x;
+    double path_y = full_path_.poses[closest_idx].pose.position.y;
+    double current_cte = std::hypot(gx - path_x, gy - path_y);
+    double cte_limit = road_half_width * safe_ratio; // 比如 5.0 * 0.66 = 3.3m
+
+    bool is_emergency = false;
+    if (current_cte > cte_limit) {
+        is_emergency = true;
+        // 强制覆盖目标速度，全力救车
+        target_ref_vel = recovery_vel; 
+        
+        // 1s 打印一次警告，防止刷屏
+        RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1000, 
+            "!!! LARGE CTE DETECTED (%.2fm > %.2fm) !!! Emergency Slowdown -> %.1f m/s", 
+            current_cte, cte_limit, recovery_vel);
     }
 
-    // 提前获取障碍物点云
-    std::vector<Point> all_obs_pts = get_all_obstacle_points(); 
-
-    int closest_idx = get_closest_path_index(cur_x_[0], cur_x_[1]);
+    // 寻找前瞻目标点
+    // 注意：如果是急救模式，lookahead 也会因为 velocity 变小而自动变短，这符合逻辑
     double lookahead_dist = std::max(5.0, target_ref_vel * N_HORIZON * DT * 1.2); 
     
     int target_idx = closest_idx;
@@ -93,227 +163,320 @@ void NmpcTrackerNode::solve_cycle() {
         double d = std::hypot(
             full_path_.poses[target_idx+1].pose.position.x - full_path_.poses[target_idx].pose.position.x,
             full_path_.poses[target_idx+1].pose.position.y - full_path_.poses[target_idx].pose.position.y);
-        dist_acc += d;
+        dist_acc += d; 
         target_idx++;
     }
-
-    // Smart Goal Adjustment: 目标点碰撞检测与前向延申
-    if (!all_obs_pts.empty()) {
-        double margin_sq = base_margin * base_margin; // 碰撞检测阈值
-        int search_limit_idx = std::min((int)full_path_.poses.size() - 1, target_idx + 600); // 限制搜索范围
-
-        // Lambda: 检查单个点是否安全
-        auto check_point_safe = [&](double x, double y) {
-            for (const auto& opt : all_obs_pts) {
-                double dx = x - opt.x;
-                double dy = y - opt.y;
-                if (dx*dx + dy*dy < margin_sq) return false; // 碰撞
-            }
-            return true; // 安全
-        };
-
-        while (target_idx < search_limit_idx) {
-            double tx = full_path_.poses[target_idx].pose.position.x;
-            double ty = full_path_.poses[target_idx].pose.position.y;
-            
-            if (check_point_safe(tx, ty)) {
-                break; // 找到安全点了
-            }
-            
-            target_idx += 5; // 步进搜索
-        }
-    }
-
-    // 此时的 goal_x/y 要么是原本的预瞄点，要么是避开障碍后的前方点
     double goal_x = full_path_.poses[target_idx].pose.position.x;
     double goal_y = full_path_.poses[target_idx].pose.position.y;
 
-    auto start_astar = std::chrono::high_resolution_clock::now();
+    // 获取障碍物 (Map Frame)
+    std::vector<Point> all_obs_pts = get_all_obstacle_points(); 
 
+    // A* 引导
+    auto start_astar = std::chrono::high_resolution_clock::now();
     std::vector<Point> guide_path;     
     std::vector<Point> raw_astar_path;
     bool astar_success = false;
     bool reused_old = false; 
 
-    // 尝试复用
+    // 尝试复用旧路径
     if (!last_guide_path_.empty()) {
-        std::vector<Point> candidate = prune_path_by_distance(last_guide_path_, cur_x_[0], cur_x_[1], lookahead_dist);
-        // 复用检查
+        std::vector<Point> candidate = prune_path_by_distance(last_guide_path_, gx, gy, lookahead_dist);
         if (candidate.size() > 5 && !check_path_collision(candidate, base_margin)) {
             Point end_pt = candidate.back();
-            // 如果旧路径终点和新目标点足够近，就复用
             if (std::hypot(end_pt.x - goal_x, end_pt.y - goal_y) < 3.0) {
-                raw_astar_path = candidate;
-                reused_old = true;
+                raw_astar_path = candidate; 
+                reused_old = true; 
                 last_guide_path_ = candidate;
             }
         }
     }
-
+    // 重规划
     if (!reused_old) {
-        raw_astar_path = astar_planner_->plan(
-            cur_x_[0], cur_x_[1], goal_x, goal_y, all_obs_pts, last_guide_path_
-        );
-        if (!raw_astar_path.empty()) {
-            last_guide_path_ = raw_astar_path;
-        }
+        raw_astar_path = astar_planner_->plan(gx, gy, goal_x, goal_y, all_obs_pts, last_guide_path_);
+        if (!raw_astar_path.empty()) last_guide_path_ = raw_astar_path;
     }
-
     // 后处理
     if (!raw_astar_path.empty()) {
         std::vector<Point> smoothed;
         if (reused_old) smoothed = raw_astar_path;
         else smoothed = AStarPlanner::smooth_path(raw_astar_path, 0.5, 0.35);
-
         double step_size = std::max(target_ref_vel * DT, 0.1); 
         guide_path = AStarPlanner::resample_path(smoothed, step_size);
         astar_success = true;
     } else {
-        // Fallback: 如果 A* 依然失败（例如被完全包围），回退到参考路径
+        // Fallback: 使用全局参考线
         for(int i=0; i <= N_HORIZON; ++i) {
             int idx = std::min(closest_idx + i, (int)full_path_.poses.size()-1);
-            guide_path.push_back({
-                full_path_.poses[idx].pose.position.x,
-                full_path_.poses[idx].pose.position.y
-            });
+            guide_path.push_back({full_path_.poses[idx].pose.position.x, full_path_.poses[idx].pose.position.y});
         }
     }
-
-    // [计时结束] A*
     auto end_astar = std::chrono::high_resolution_clock::now();
-    t_astar = std::chrono::duration<double, std::milli>(end_astar - start_astar).count();
+    double t_astar = std::chrono::duration<double, std::milli>(end_astar - start_astar).count();
 
-    auto start_prep = std::chrono::high_resolution_clock::now();
+    // =========================================================
+    // 3. 构建 NMPC 问题 (Phase 3: Local Frame Setup)
+    // =========================================================
+    // 预计算旋转矩阵: Global -> Local
+    double cos_theta = std::cos(gyaw);
+    double sin_theta = std::sin(gyaw);
+    
+    // 坐标变换 Lambda: Map Frame (gx, gy) -> Body Frame (0, 0)
+    auto transform_to_local = [&](double x, double y) -> std::pair<double, double> {
+        double dx = x - gx; double dy = y - gy;
+        return {dx * cos_theta + dy * sin_theta, -dx * sin_theta + dy * cos_theta};
+    };
 
+    auto conf = racing_control_hyperplane_acados_get_nlp_config(capsule_);
+    auto dims = racing_control_hyperplane_acados_get_nlp_dims(capsule_);
+    auto in = racing_control_hyperplane_acados_get_nlp_in(capsule_);
+    auto out = racing_control_hyperplane_acados_get_nlp_out(capsule_);
+
+    // A. 设置初始状态 (强制为局部原点，解决数值稳定性问题)
+    double x0_local[5] = {0.0, 0.0, 0.0, gv, gw};
+    ocp_nlp_constraints_model_set(conf, dims, in, out, 0, "lbx", x0_local);
+    ocp_nlp_constraints_model_set(conf, dims, in, out, 0, "ubx", x0_local);
+
+    // B. 转换障碍物点云到局部坐标系 (只需做一次)
+    std::vector<Point> local_obs_pts;
+    local_obs_pts.reserve(all_obs_pts.size());
+    for(const auto& p : all_obs_pts) {
+        auto lp = transform_to_local(p.x, p.y);
+        local_obs_pts.push_back({lp.first, lp.second});
+    }
+
+    double last_yaw_ref_global = gyaw; 
+    bool use_virtual_walls = this->get_parameter("track.use_virtual_walls").as_bool();
+    int max_obs = this->get_parameter("obstacle_avoidance.max_obstacles").as_int();
+
+    // 可视化缓存
     std::vector<NmpcVisualizer::VizObs> all_constraint_viz;
     std::vector<std::pair<double, double>> target_path_viz; 
-    std::vector<std::pair<double, double>> astar_guide_viz; 
 
-    if (!guide_path.empty()) {
-        for (const auto& p : guide_path) {
-            astar_guide_viz.push_back({p.x, p.y});
-        }
-    }
-
-    double last_yaw_ref = cur_x_[2]; 
-
+    // C. 填充预测视界 (Reference & Constraints)
     for (int i = 0; i <= N_HORIZON; i++) {
-        // Cost Ref
+        // 1. 获取全局参考点
         int global_idx = std::min(closest_idx + i, (int)full_path_.poses.size() - 1);
-        double ref_tx = full_path_.poses[global_idx].pose.position.x;
-        double ref_ty = full_path_.poses[global_idx].pose.position.y;
-        target_path_viz.push_back({ref_tx, ref_ty});
-
-        double ref_yaw = 0.0;
+        double ref_tx_g = full_path_.poses[global_idx].pose.position.x;
+        double ref_ty_g = full_path_.poses[global_idx].pose.position.y;
+        
+        // 2. 变换到局部坐标系
+        auto ref_local = transform_to_local(ref_tx_g, ref_ty_g);
+        
+        // 3. 角度连续化处理 (Unwrap) 并转到局部
+        double global_next_yaw = 0.0;
         int global_next = std::min(global_idx + 1, (int)full_path_.poses.size() - 1);
         if (global_next > global_idx) {
-            double dx = full_path_.poses[global_next].pose.position.x - ref_tx;
-            double dy = full_path_.poses[global_next].pose.position.y - ref_ty;
-            ref_yaw = std::atan2(dy, dx);
-        } else { ref_yaw = last_yaw_ref; }
+            double dx = full_path_.poses[global_next].pose.position.x - ref_tx_g;
+            double dy = full_path_.poses[global_next].pose.position.y - ref_ty_g;
+            global_next_yaw = std::atan2(dy, dx);
+        } else { global_next_yaw = last_yaw_ref_global; }
 
-        double diff = ref_yaw - last_yaw_ref;
+        double diff = global_next_yaw - last_yaw_ref_global;
         while(diff > M_PI) diff -= 2*M_PI; while(diff < -M_PI) diff += 2*M_PI;
-        ref_yaw = last_yaw_ref + diff;
-        last_yaw_ref = ref_yaw;
+        double smooth_yaw_global = last_yaw_ref_global + diff;
+        last_yaw_ref_global = smooth_yaw_global;
+        double yaw_ref_local = smooth_yaw_global - gyaw; // Local Yaw
 
-        double yref[7] = {ref_tx, ref_ty, target_ref_vel, ref_yaw, 0, 0, 0}; 
+        // 4. 设置 Cost Reference
+        // 注意：target_ref_vel 可能已经被 is_emergency 逻辑修改为低速
+        double yref[7] = {ref_local.first, ref_local.second, target_ref_vel, yaw_ref_local, 0, 0, 0};
         ocp_nlp_cost_model_set(conf, dims, in, i, "yref", yref);
+        
+        // 缓存可视化 (Global Frame)
+        target_path_viz.push_back({ref_tx_g, ref_ty_g}); 
 
-        // Constraints
-        std::vector<ObstacleParam> step_obs;
+        // 5. 设置约束 (使用 Guide Path)
         int guide_idx = std::min(i, (int)guide_path.size() - 1);
-        Point guide_seed = guide_path[guide_idx];
+        Point guide_pt_g = guide_path[guide_idx];
+        auto guide_pt_l = transform_to_local(guide_pt_g.x, guide_pt_g.y);
+        
+        std::vector<ObstacleParam> step_obs;
 
+        // 虚拟墙 (局部坐标系构建)
         if (use_virtual_walls) {
-            double cy = std::cos(ref_yaw); double sy = std::sin(ref_yaw);
-            ObstacleParam left_wall;
-            left_wall.ox = ref_tx - sy * road_half_width; left_wall.oy = ref_ty + cy * road_half_width;
-            left_wall.r  = base_margin; left_wall.nx = sy; left_wall.ny = -cy; 
+            double cy = std::cos(yaw_ref_local); 
+            double sy = std::sin(yaw_ref_local);
+            
+            ObstacleParam left_wall, right_wall;
+            
+            // 左墙
+            left_wall.ox = ref_local.first - sy * road_half_width; 
+            left_wall.oy = ref_local.second + cy * road_half_width;
+            left_wall.r  = base_margin; 
+            left_wall.nx = sy; left_wall.ny = -cy; 
             step_obs.push_back(left_wall);
-
-            ObstacleParam right_wall;
-            right_wall.ox = ref_tx + sy * road_half_width; right_wall.oy = ref_ty - cy * road_half_width;
-            right_wall.r  = base_margin; right_wall.nx = -sy; right_wall.ny = cy;
+            
+            // 右墙
+            right_wall.ox = ref_local.first + sy * road_half_width; 
+            right_wall.oy = ref_local.second - cy * road_half_width;
+            right_wall.r  = base_margin; 
+            right_wall.nx = -sy; right_wall.ny = cy;
             step_obs.push_back(right_wall);
 
+            // [可视化] 虚拟墙逆变换 (Local -> Global)
             if (i % 2 == 0) {
-                NmpcVisualizer::VizObs vl; vl.id = 10000 + i; vl.param = left_wall; vl.alpha = 0.2; vl.is_active = true;
-                NmpcVisualizer::VizObs vr; vr.id = 40000 + i; vr.param = right_wall; vr.alpha = 0.2; vr.is_active = true;
-                all_constraint_viz.push_back(vl); all_constraint_viz.push_back(vr);
+                auto obs_local_to_global = [&](const ObstacleParam& p_local) -> ObstacleParam {
+                    ObstacleParam p_global = p_local;
+                    p_global.nx = p_local.nx * cos_theta - p_local.ny * sin_theta;
+                    p_global.ny = p_local.nx * sin_theta + p_local.ny * cos_theta;
+                    p_global.ox = p_local.ox * cos_theta - p_local.oy * sin_theta + gx;
+                    p_global.oy = p_local.ox * sin_theta + p_local.oy * cos_theta + gy;
+                    return p_global;
+                };
+
+                NmpcVisualizer::VizObs vl; vl.id = 10000 + i; vl.param = obs_local_to_global(left_wall); vl.alpha = 0.2; vl.is_active = true;
+                all_constraint_viz.push_back(vl);
+
+                NmpcVisualizer::VizObs vr; vr.id = 40000 + i; vr.param = obs_local_to_global(right_wall); vr.alpha = 0.2; vr.is_active = true;
+                all_constraint_viz.push_back(vr);
             }
         }
 
-        if (!all_obs_pts.empty()) {
-            ObstacleParam p = HyperplaneUtil::fit_obstacle(all_obs_pts, guide_seed.x, guide_seed.y, base_margin);
-            // 距离检测，只对附近的障碍物生效
-            if (std::hypot(p.ox - guide_seed.x, p.oy - guide_seed.y) < 6.0) {
+        // 障碍物拟合 (局部)
+        if (!local_obs_pts.empty()) {
+            ObstacleParam p = HyperplaneUtil::fit_obstacle(local_obs_pts, guide_pt_l.first, guide_pt_l.second, base_margin);
+            
+            // 距离检查 (6.0m 内生效)
+            if (std::hypot(p.ox - guide_pt_l.first, p.oy - guide_pt_l.second) < 6.0) {
                  step_obs.push_back(p);
-                 // 始终可视化
-                 if (i % 5 == 0) { 
-                     NmpcVisualizer::VizObs vo; 
-                     vo.id = 50000 + i; vo.param = p; vo.is_active = true; vo.alpha = 0.6; 
-                     all_constraint_viz.push_back(vo);
+                 
+                 // 可视化：需要把局部参数转回全局
+                 if (i % 5 == 0) {
+                    NmpcVisualizer::VizObs vo; 
+                    ObstacleParam p_global = p;
+                    // 旋转平移回去
+                    p_global.nx = p.nx * cos_theta - p.ny * sin_theta;
+                    p_global.ny = p.nx * sin_theta + p.ny * cos_theta;
+                    p_global.ox = p.ox * cos_theta - p.oy * sin_theta + gx;
+                    p_global.oy = p.ox * sin_theta + p.oy * cos_theta + gy;
+                    
+                    vo.id = 50000 + i; vo.param = p_global; vo.is_active = true; vo.alpha = 0.6; 
+                    all_constraint_viz.push_back(vo);
                  }
             }
         }
-
+        
         double p_array[N_PARAM];
         HyperplaneUtil::pack_params(p_array, step_obs, max_obs);
         racing_control_hyperplane_acados_update_params(capsule_, i, p_array, N_PARAM);
     }
-    
-    // [计时结束] 构建问题
-    auto end_prep = std::chrono::high_resolution_clock::now();
-    t_obs_prep = std::chrono::duration<double, std::milli>(end_prep - start_prep).count();
 
-    if (is_first_run_) {
-        for (int i = 0; i <= N_HORIZON; i++) {
-            ocp_nlp_out_set(conf, dims, out, in, i, "x", cur_x_);
-            double u0[2] = {0.0, 0.0};
-            ocp_nlp_out_set(conf, dims, out, in, i, "u", u0);
+    // =========================================================
+    // 4. 热启动处理 (Phase 4: Warm Start)
+    // =========================================================
+    if (enable_warm_start) {
+        // Shift 策略
+        for (int i = 0; i < N_HORIZON; i++) {
+            double xt[5], ut[2];
+            ocp_nlp_out_get(conf, dims, out, i + 1, "x", xt); 
+            ocp_nlp_out_get(conf, dims, out, i, "u", ut);
+            ocp_nlp_out_set(conf, dims, out, in, i, "x", xt);
+            ocp_nlp_out_set(conf, dims, out, in, i, "u", ut);
         }
-        is_first_run_ = false;
+        double xt_last[5], ut_last[2];
+        ocp_nlp_out_get(conf, dims, out, N_HORIZON, "x", xt_last); 
+        ocp_nlp_out_get(conf, dims, out, N_HORIZON-1, "u", ut_last);
+        ocp_nlp_out_set(conf, dims, out, in, N_HORIZON, "x", xt_last);
+    } else {
+        // Cold Start: Reset
+        for (int i = 0; i <= N_HORIZON; i++) {
+            ocp_nlp_out_set(conf, dims, out, in, i, "x", x0_local);
+            if(i < N_HORIZON) { 
+                double u0[2] = {0.0, 0.0}; 
+                ocp_nlp_out_set(conf, dims, out, in, i, "u", u0); 
+            }
+        }
     }
 
-    ocp_nlp_constraints_model_set(conf, dims, in, out, 0, "lbx", cur_x_);
-    ocp_nlp_constraints_model_set(conf, dims, in, out, 0, "ubx", cur_x_);
-
+    // =========================================================
+    // 5. 求解 (Phase 5: Solve)
+    // =========================================================
     auto start_solve = std::chrono::high_resolution_clock::now();
     int status = racing_control_hyperplane_acados_solve(capsule_);
     auto end_solve = std::chrono::high_resolution_clock::now();
-    t_solve = std::chrono::duration<double, std::milli>(end_solve - start_solve).count();
+    double t_solve = std::chrono::duration<double, std::milli>(end_solve - start_solve).count();
+    double t_total = std::chrono::duration<double, std::milli>(end_solve - start_total).count();
     
-    auto end_total = std::chrono::high_resolution_clock::now();
-    double t_total = std::chrono::duration<double, std::milli>(end_total - start_total).count();
-
     std_msgs::msg::Float32 time_msg; time_msg.data = t_total;
     pub_solve_time_->publish(time_msg);
 
-    // 状态显示逻辑：因为强制运行 A*，所以只要 astar_success 就是 Plan 或 Reuse
+    // =========================================================
+    // 6. 输出与可视化 (Phase 6: Output)
+    // =========================================================
     std::string astar_str = astar_success ? (reused_old ? "Reuse" : "Plan") : "Fail";
-    
     char log_buf[256];
+    
     if (status == 0) {
         snprintf(log_buf, sizeof(log_buf), 
-            "TIME(ms)[Tot:%.1f A*:%.1f Obs:%.1f QP:%.1f] ST:[OK] V:%.2f W:%.2f A*:%s",
-            t_total, t_astar, t_obs_prep, t_solve, 
-            cur_x_[3], cur_x_[4], astar_str.c_str());
-        RCLCPP_INFO(this->get_logger(), "%s", log_buf);
+            "TIME[Tot:%.1f] A*:%s ESO[Lin:%.2f] WS:[%s] V:%.2f %s",
+            t_total, astar_str.c_str(), dist_acc_lin, 
+            enable_warm_start ? "ON" : "OFF", gv,
+            is_emergency ? "[RECOVERY MODE]" : "");
+            
+        // 如果触发了急救，打印 Warning 级别的日志让用户看见
+        if (is_emergency) RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 2000, "%s", log_buf);
+        else RCLCPP_INFO(this->get_logger(), "%s", log_buf);
+
+        double u0[2]; 
+        ocp_nlp_out_get(conf, dims, out, 0, "u", u0);
+        
+        // 缓存本帧计算出的理想加速度，作为下一帧 ESO 的输入
+        last_cmd_acc_ = u0[0];
+        last_cmd_w_acc_ = u0[1];
+
+        // 发布命令 (包含 ESO 动态补偿)
+        publish_command(conf, dims, out, dist_acc_lin, dist_acc_ang);
+        
+        // 转换预测轨迹：Local -> Global (为了 Rviz 显示)
+        std::vector<std::vector<double>> global_pred_traj;
+        for (int i = 0; i <= N_HORIZON; i++) {
+            double x[5]; ocp_nlp_out_get(conf, dims, out, i, "x", x);
+            // x[0], x[1] 是局部坐标，需要转回全局
+            double gx_pred = x[0] * cos_theta - x[1] * sin_theta + gx;
+            double gy_pred = x[0] * sin_theta + x[1] * cos_theta + gy;
+            global_pred_traj.push_back({gx_pred, gy_pred});
+        }
+        
+        std::vector<std::pair<double, double>> astar_guide_viz; 
+        for (const auto& p : guide_path) astar_guide_viz.push_back({p.x, p.y});
+        
+        render_visualization(global_pred_traj, all_constraint_viz, target_path_viz, astar_guide_viz, goal_x, goal_y);
+
     } else {
-        snprintf(log_buf, sizeof(log_buf), 
-            "TIME(ms)[Tot:%.1f A*:%.1f Obs:%.1f QP:%.1f] ST:[FAIL %d] V:%.2f W:%.2f A*:%s",
-            t_total, t_astar, t_obs_prep, t_solve, status, 
-            cur_x_[3], cur_x_[4], astar_str.c_str());
+        snprintf(log_buf, sizeof(log_buf), "QP FAIL: %d", status);
         RCLCPP_WARN(this->get_logger(), "%s", log_buf);
         publish_emergency_brake();
     }
+}
 
-    if (status == 0) {
-        publish_command(conf, dims, out);
-        // [修改] 传入 goal_x 和 goal_y 进行可视化
-        render_visualization(conf, dims, out, all_constraint_viz, target_path_viz, astar_guide_viz, goal_x, goal_y);
-    }
+// 指令发布函数 (反馈线性化补偿)
+void NmpcTrackerNode::publish_command(ocp_nlp_config* conf, ocp_nlp_dims* dims, ocp_nlp_out* out, 
+                                      double dist_lin, double dist_ang) 
+{
+    double u0[2]; 
+    ocp_nlp_out_get(conf, dims, out, 0, "u", u0);
+    
+    geometry_msgs::msg::Twist cmd;
+    double max_v = this->get_parameter("robot_limits.max_linear_velocity").as_double();
+    double min_v = this->get_parameter("robot_limits.min_linear_velocity").as_double();
+    
+    double b0_lin = this->get_parameter("eso.b0_linear").as_double();
+    double b0_ang = this->get_parameter("eso.b0_angular").as_double();
+
+    // 核心：u_actual = u_ideal - (disturbance / b0)
+    // 如果 ESO 关闭，dist_lin 为 0，退化为纯 NMPC
+    double u_acc_comp = u0[0] - dist_lin / b0_lin;
+    double u_ang_comp = u0[1] - dist_ang / b0_ang;
+
+    // 积分得到速度指令
+    double v_cmd = cur_x_[3] + u_acc_comp * DT;
+    double w_cmd = cur_x_[4] + u_ang_comp * DT;
+    
+    cmd.linear.x = std::clamp(v_cmd, min_v, max_v);
+    cmd.angular.z = std::clamp(w_cmd, -2.5, 2.5);
+
+    pub_cmd_->publish(cmd);
 }
 
 std::vector<Point> NmpcTrackerNode::get_all_obstacle_points() {
@@ -389,76 +552,59 @@ int NmpcTrackerNode::get_closest_path_index(double x, double y) {
     return idx;
 }
 
-void NmpcTrackerNode::publish_command(ocp_nlp_config* conf, ocp_nlp_dims* dims, ocp_nlp_out* out) {
-    double u0[2]; ocp_nlp_out_get(conf, dims, out, 0, "u", u0);
-    geometry_msgs::msg::Twist cmd;
-    double max_v = this->get_parameter("robot_limits.max_linear_velocity").as_double();
-    double min_v = this->get_parameter("robot_limits.min_linear_velocity").as_double();
-    
-    cmd.linear.x = std::clamp(cur_x_[3] + u0[0] * DT, min_v, max_v);
-    cmd.angular.z = std::clamp(cur_x_[4] + u0[1] * DT, -2.5, 2.5);
-    pub_cmd_->publish(cmd);
-}
-
 void NmpcTrackerNode::publish_emergency_brake() { 
-    geometry_msgs::msg::Twist cmd; pub_cmd_->publish(cmd); 
+    geometry_msgs::msg::Twist cmd; 
+    cmd.linear.x = 0.0; cmd.angular.z = 0.0;
+    pub_cmd_->publish(cmd); 
 }
 
-bool NmpcTrackerNode::is_in_fov(double ox, double oy) {
-    return true; 
-}
+bool NmpcTrackerNode::is_in_fov(double ox, double oy) { return true; }
 
-void NmpcTrackerNode::render_visualization(ocp_nlp_config* conf, ocp_nlp_dims* dims, ocp_nlp_out* out, 
-                          const std::vector<NmpcVisualizer::VizObs>& constraint_viz, 
-                          const std::vector<std::pair<double, double>>& target_path_viz,
-                          const std::vector<std::pair<double, double>>& astar_guide_viz,
-                          double goal_x, double goal_y) 
+void NmpcTrackerNode::render_visualization(
+    const std::vector<std::vector<double>>& pred_traj, 
+    const std::vector<NmpcVisualizer::VizObs>& constraint_viz, 
+    const std::vector<std::pair<double, double>>& target_path_viz,
+    const std::vector<std::pair<double, double>>& astar_guide_viz,
+    double goal_x, double goal_y) 
 {
-    std::vector<std::vector<double>> pred_traj;
-    for (int i = 0; i <= N_HORIZON; i++) {
-        double x[5]; ocp_nlp_out_get(conf, dims, out, i, "x", x);
-        pred_traj.push_back({x[0], x[1]});
-    }
     double fov_deg = this->get_parameter("perception.fov_half_angle_deg").as_double();
     std::vector<double> robot_state = {cur_x_[0], cur_x_[1], cur_x_[2]};
     
+    // 调用 Visualizer 生成 MarkerArray
     auto markers = visualizer_->create_viz_packet(
         this->get_clock()->now(), pred_traj, constraint_viz, target_path_viz, false, robot_state, fov_deg * M_PI / 180.0);
 
+    // 添加 Goal Marker
     visualization_msgs::msg::Marker goal_mk;
-    goal_mk.header.frame_id = "map";
+    goal_mk.header.frame_id = "map"; 
     goal_mk.header.stamp = this->get_clock()->now();
-    goal_mk.ns = "nmpc_goal";
-    goal_mk.id = 8888;
+    goal_mk.ns = "nmpc_goal"; 
+    goal_mk.id = 8888; 
     goal_mk.type = visualization_msgs::msg::Marker::SPHERE;
     goal_mk.action = visualization_msgs::msg::Marker::ADD;
-    goal_mk.pose.position.x = goal_x;
-    goal_mk.pose.position.y = goal_y;
+    goal_mk.pose.position.x = goal_x; 
+    goal_mk.pose.position.y = goal_y; 
     goal_mk.pose.position.z = 0.2;
-    goal_mk.pose.orientation.w = 1.0;
-    goal_mk.scale.x = 0.4; 
-    goal_mk.scale.y = 0.4;
-    goal_mk.scale.z = 0.4;
-    goal_mk.color.r = 1.0; // Magenta
-    goal_mk.color.g = 0.0;
-    goal_mk.color.b = 1.0;
-    goal_mk.color.a = 0.9;
+    goal_mk.pose.orientation.w = 1.0; 
+    goal_mk.scale.x = 0.4; goal_mk.scale.y = 0.4; goal_mk.scale.z = 0.4;
+    goal_mk.color.r = 1.0; goal_mk.color.g = 0.0; goal_mk.color.b = 1.0; goal_mk.color.a = 0.9;
     markers.markers.push_back(goal_mk);
 
+    // 添加 A* Debug Marker
     if (!astar_guide_viz.empty()) {
         visualization_msgs::msg::Marker m;
-        m.header.frame_id = "map";
+        m.header.frame_id = "map"; 
         m.header.stamp = this->get_clock()->now();
-        m.ns = "astar_path_debug";
-        m.id = 9999;
+        m.ns = "astar_path_debug"; 
+        m.id = 9999; 
         m.type = visualization_msgs::msg::Marker::SPHERE_LIST;
-        m.action = visualization_msgs::msg::Marker::ADD;
+        m.action = visualization_msgs::msg::Marker::ADD; 
         m.pose.orientation.w = 1.0;
         m.scale.x = 0.15; m.scale.y = 0.15; m.scale.z = 0.15;
         m.color.r = 0.0; m.color.g = 1.0; m.color.b = 1.0; m.color.a = 0.8; 
         for (const auto& p : astar_guide_viz) {
-            geometry_msgs::msg::Point pt;
-            pt.x = p.first; pt.y = p.second; pt.z = 0.1;
+            geometry_msgs::msg::Point pt; 
+            pt.x = p.first; pt.y = p.second; pt.z = 0.1; 
             m.points.push_back(pt);
         }
         markers.markers.push_back(m);
@@ -469,9 +615,11 @@ void NmpcTrackerNode::render_visualization(ocp_nlp_config* conf, ocp_nlp_dims* d
 void NmpcTrackerNode::setup_ros_interfaces() {
     sub_odom_ = create_subscription<nav_msgs::msg::Odometry>("/odom", 10, 
         [this](const nav_msgs::msg::Odometry::SharedPtr msg) {
-            cur_x_[0] = msg->pose.pose.position.x; cur_x_[1] = msg->pose.pose.position.y;
+            cur_x_[0] = msg->pose.pose.position.x; 
+            cur_x_[1] = msg->pose.pose.position.y;
             cur_x_[2] = tf2::getYaw(msg->pose.pose.orientation);
-            cur_x_[3] = msg->twist.twist.linear.x; cur_x_[4] = msg->twist.twist.angular.z;
+            cur_x_[3] = msg->twist.twist.linear.x; 
+            cur_x_[4] = msg->twist.twist.angular.z;
             odom_ok_ = true;
         });
         
@@ -483,13 +631,20 @@ void NmpcTrackerNode::setup_ros_interfaces() {
             auto labels = cluster_worker_->cluster(pts);
             std::lock_guard<std::mutex> lock(cluster_mutex_);
             current_clusters_.clear();
-            for (size_t i = 0; i < labels.size(); i++) if (labels[i] > 0) current_clusters_[labels[i]].push_back(pts[i]);
+            for (size_t i = 0; i < labels.size(); i++) 
+                if (labels[i] > 0) current_clusters_[labels[i]].push_back(pts[i]);
         });
+        
     sub_path_ = create_subscription<nav_msgs::msg::Path>("/ref_path", 10, 
-        [this](const nav_msgs::msg::Path::SharedPtr msg) { full_path_ = *msg; path_ok_ = true; });
+        [this](const nav_msgs::msg::Path::SharedPtr msg) { 
+            full_path_ = *msg; 
+            path_ok_ = true; 
+        });
+        
     pub_cmd_ = create_publisher<geometry_msgs::msg::Twist>("/cmd_vel", 10);
     pub_viz_ = create_publisher<visualization_msgs::msg::MarkerArray>("/nmpc_viz", 10);
     pub_solve_time_ = create_publisher<std_msgs::msg::Float32>("/nmpc/solve_time", 10);
+    
     int ms = this->get_parameter("nmpc_config.control_loop_ms").as_int();
     timer_ = create_wall_timer(std::chrono::milliseconds(ms), std::bind(&NmpcTrackerNode::solve_cycle, this));
 }

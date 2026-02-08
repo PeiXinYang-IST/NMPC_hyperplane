@@ -18,16 +18,15 @@
 #include <algorithm>
 #include <string>
 
-// Acados Solver Header
 extern "C" {
     #include "acados_solver_racing_control_hyperplane.h"
 }
 
-// User Defined Headers
 #include "dbscan.hpp"
 #include "hyperplane_util.hpp"
 #include "nmpc_visualizer.hpp"
 #include "astar_planner.hpp"
+#include "eso.hpp" 
 
 class NmpcTrackerNode : public rclcpp::Node {
 public:
@@ -35,10 +34,8 @@ public:
     ~NmpcTrackerNode();
 
 private:
-    // --- 核心控制循环 ---
     void solve_cycle();
 
-    // --- 辅助函数 ---
     double unwrap_yaw(double target_yaw, double current_yaw);
     int get_closest_path_index(double x, double y);
     bool is_in_fov(double ox, double oy);
@@ -48,28 +45,25 @@ private:
     std::vector<Point> prune_path_by_distance(const std::vector<Point>& path, double curr_x, double curr_y, double lookahead_dist);
     void apply_normal_smoothing(ObstacleParam& p, const std::string& key, double alpha, double max_rot_rad);
 
-    // --- ROS 接口 ---
     void setup_ros_interfaces();
-    void publish_command(ocp_nlp_config* conf, ocp_nlp_dims* dims, ocp_nlp_out* out);
+    void publish_command(ocp_nlp_config* conf, ocp_nlp_dims* dims, ocp_nlp_out* out, double dist_lin, double dist_ang);
     void publish_emergency_brake();
-    
-    // [修改] 增加 goal_x, goal_y 参数用于可视化
-    void render_visualization(ocp_nlp_config* conf, ocp_nlp_dims* dims, ocp_nlp_out* out, 
+    void render_visualization(const std::vector<std::vector<double>>& pred_traj, 
                               const std::vector<NmpcVisualizer::VizObs>& constraint_viz, 
                               const std::vector<std::pair<double, double>>& target_path_viz,
                               const std::vector<std::pair<double, double>>& astar_guide_viz,
                               double goal_x, double goal_y);
 
-    // --- 成员变量 ---
     racing_control_hyperplane_solver_capsule* capsule_;
     std::unique_ptr<NmpcVisualizer> visualizer_;
     std::unique_ptr<DBSCAN> cluster_worker_;
     std::unique_ptr<AStarPlanner> astar_planner_;
+    std::unique_ptr<ESO> linear_eso_;
+    std::unique_ptr<ESO> angular_eso_;
 
     rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_odom_;
     rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sub_cloud_;
     rclcpp::Subscription<nav_msgs::msg::Path>::SharedPtr sub_path_;
-    
     rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr pub_cmd_;
     rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_viz_;
     rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr pub_solve_time_;
@@ -79,14 +73,14 @@ private:
     std::map<int, std::vector<Point>> current_clusters_;
     std::map<std::string, std::pair<double, double>> prev_normal_map_;
     
-    // 缓存上一帧 A* 路径
     std::vector<Point> last_guide_path_;
+    double last_cmd_acc_ = 0.0;   
+    double last_cmd_w_acc_ = 0.0; 
 
-    double cur_x_[5]; // [x, y, yaw, v, w]
+    double cur_x_[5]; 
     nav_msgs::msg::Path full_path_;
     bool odom_ok_ = false;
     bool path_ok_ = false;
     bool is_first_run_ = true;
 };
-
 #endif

@@ -66,7 +66,7 @@ class GlobalPathPublisher(Node):
         self.timer = self.create_timer(0.05, self.publish_path) 
         
         # 4. 生成赛道
-        self.resolution = 0.2
+        self.resolution = 0.1
         self.track_gen = TrackGenerator(resolution=self.resolution)
         self.generate_complex_track()
         

@@ -1,12 +1,16 @@
 /**:
   ros__parameters:
     nmpc_config:
-      ref_velocity: 4.0             # 期望巡航速度 (m/s)
+      ref_velocity: 5.0             # 期望巡航速度 (m/s)
       control_loop_ms: 50           # 控制循环周期 (毫秒)
       enable_warm_start: False
-      curvature_threshold: 1.0
+      curvature_threshold: 2000.0
+      global_curvature_weight: 1.0
+      local_curvature_weight: 1.0
+      local_curvature_smoothing: 0.3
+
     safety:
-      max_cte_ratio: 0.66
+      max_cte_ratio: 10.0     #暂时不开
       recovery_velocity: 0.5
 
     track:
@@ -20,9 +24,9 @@
 
     obstacle_avoidance:
       max_obstacles: 5              # 求解器支持的最大障碍物数量
-      base_margin: 1.0              # 基础安全距离/机器人半径 (米)
+      base_margin: 1.5              # 基础安全距离/机器人半径 (米)
       smoothing_alpha: 0.2          # 法向量一阶低通滤波系数 (0-1)
-      astar_reference_cost_weight: 1.0 
+      astar_reference_cost_weight: 0.2
       history_bias_weight: 0.2
 
     robot_limits:

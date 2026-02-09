@@ -6,7 +6,7 @@
 
 #### cd scripts
 #### python3 generate_c.py
-#### echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/mnt/c/Users/yang/Downloads/acados/lib' >> ~/.bashrc
+#### echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/mnt/c/Users/yang/Downloads/acados/lib' >> ~/.bashrc   换成自己的
 
 ### 编译
 

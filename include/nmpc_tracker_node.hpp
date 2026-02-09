@@ -52,7 +52,9 @@ private:
                               const std::vector<NmpcVisualizer::VizObs>& constraint_viz, 
                               const std::vector<std::pair<double, double>>& target_path_viz,
                               const std::vector<std::pair<double, double>>& astar_guide_viz,
-                              double goal_x, double goal_y);
+                              double goal_x, double goal_y,
+                              const std::vector<geometry_msgs::msg::Point>& curve_pts,
+                              const std::vector<std_msgs::msg::ColorRGBA>& curve_cols);
 
     racing_control_hyperplane_solver_capsule* capsule_;
     std::unique_ptr<NmpcVisualizer> visualizer_;
@@ -82,5 +84,6 @@ private:
     bool odom_ok_ = false;
     bool path_ok_ = false;
     bool is_first_run_ = true;
+    double last_filtered_local_curve_ = 0.0;
 };
 #endif

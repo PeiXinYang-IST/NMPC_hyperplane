@@ -3,6 +3,7 @@
 
 #include <visualization_msgs/msg/marker_array.hpp>
 #include <geometry_msgs/msg/point.hpp>
+#include <std_msgs/msg/color_rgba.hpp> // [新增]
 #include "hyperplane_util.hpp"
 
 class NmpcVisualizer {
@@ -17,16 +18,18 @@ public:
     using Marker = visualization_msgs::msg::Marker;
     using MarkerArray = visualization_msgs::msg::MarkerArray;
 
-    // [修改] 参数列表增加了 robot_state (x, y, yaw) 和 fov_info
     MarkerArray create_viz_packet(
         const rclcpp::Time& stamp,
         const std::vector<std::vector<double>>& pred_traj,
         const std::vector<VizObs>& constraint_tunnel, 
         const std::vector<std::pair<double, double>>& target_path_viz,
         bool is_astar_active,
-        const std::vector<double>& robot_state, // [x, y, yaw]
-        double fov_half_rad,                    // 半视场角 (弧度)
-        double fov_dist = 10.0                  // 视场距离 (米)
+        const std::vector<double>& robot_state,
+        double fov_half_rad,
+        // [新增] 接收曲率可视化的点和颜色
+        const std::vector<geometry_msgs::msg::Point>& curvature_pts,
+        const std::vector<std_msgs::msg::ColorRGBA>& curvature_colors,
+        double fov_dist = 10.0
     ) 
     {
         MarkerArray array;
@@ -36,12 +39,17 @@ public:
 
         array.markers.push_back(make_fov_marker(999, robot_state, fov_half_rad, fov_dist, stamp));
 
+        // [新增] 添加曲率热力图路径
+        if (!curvature_pts.empty()) {
+            array.markers.push_back(make_curvature_debug_marker(888, curvature_pts, curvature_colors, stamp));
+        }
+
         for (size_t i = 0; i < pred_traj.size(); ++i) 
             array.markers.push_back(make_marker(i + 1000, pred_traj[i][0], pred_traj[i][1], 0.1, 1.0, 0.0, 0.0, 0.8, stamp));
         
         for (size_t i = 0; i < target_path_viz.size(); ++i) {
             float r=0, g=0, b=1.0, radius=0.2;
-            if (is_astar_active) { r=0.0; g=1.0; b=1.0; radius=0.06; } // 青色
+            if (is_astar_active) { r=0.0; g=1.0; b=1.0; radius=0.06; } 
             array.markers.push_back(make_marker(i + 2000, target_path_viz[i].first, target_path_viz[i].second, radius, r, g, b, 0.6, stamp));
         }
 
@@ -54,34 +62,44 @@ public:
     }
 
 private:
-    Marker make_fov_marker(int id, const std::vector<double>& state, double half_fov, double dist, rclcpp::Time t) {
+    // [新增] 生成彩色线条的函数
+    Marker make_curvature_debug_marker(int id, 
+                                       const std::vector<geometry_msgs::msg::Point>& pts, 
+                                       const std::vector<std_msgs::msg::ColorRGBA>& cols, 
+                                       rclcpp::Time t) 
+    {
         Marker m;
         m.header.frame_id = "map"; m.header.stamp = t;
-        m.id = id; m.type = Marker::LINE_STRIP; // 使用线段连接
+        m.id = id; 
+        m.type = Marker::LINE_STRIP; // 连线
+        m.action = Marker::ADD;
         m.pose.orientation.w = 1.0;
-        m.scale.x = 0.05; // 线宽
-        m.color.r = 1.0; m.color.g = 1.0; m.color.b = 0.0; m.color.a = 0.8; // 黄色
+        m.scale.x = 0.15; // 线宽，稍微粗一点方便看颜色
+        
+        m.points = pts;
+        m.colors = cols; // Rviz 会在相邻点的颜色之间自动插值
 
-        double x = state[0];
-        double y = state[1];
-        double yaw = state[2];
+        m.color.a = 1.0; // 必须设置 alpha，虽然会被 colors 覆盖，但有些 Rviz 版本需要
+        return m;
+    }
 
+    Marker make_fov_marker(int id, const std::vector<double>& state, double half_fov, double dist, rclcpp::Time t) {
+        // ... (保持原样) ...
+        Marker m;
+        m.header.frame_id = "map"; m.header.stamp = t;
+        m.id = id; m.type = Marker::LINE_STRIP; 
+        m.pose.orientation.w = 1.0;
+        m.scale.x = 0.05; 
+        m.color.r = 1.0; m.color.g = 1.0; m.color.b = 0.0; m.color.a = 0.8; 
+
+        double x = state[0]; double y = state[1]; double yaw = state[2];
         geometry_msgs::msg::Point p_center, p_left, p_right;
         p_center.x = x; p_center.y = y; p_center.z = 0.1;
+        p_left.x = x + dist * cos(yaw + half_fov); p_left.y = y + dist * sin(yaw + half_fov); p_left.z = 0.1;
+        p_right.x = x + dist * cos(yaw - half_fov); p_right.y = y + dist * sin(yaw - half_fov); p_right.z = 0.1;
 
-        p_left.x = x + dist * cos(yaw + half_fov);
-        p_left.y = y + dist * sin(yaw + half_fov);
-        p_left.z = 0.1;
-
-        p_right.x = x + dist * cos(yaw - half_fov);
-        p_right.y = y + dist * sin(yaw - half_fov);
-        p_right.z = 0.1;
-
-        m.points.push_back(p_center);
-        m.points.push_back(p_left);
-        m.points.push_back(p_right);
-        m.points.push_back(p_center);
-
+        m.points.push_back(p_center); m.points.push_back(p_left);
+        m.points.push_back(p_right); m.points.push_back(p_center);
         return m;
     }
 

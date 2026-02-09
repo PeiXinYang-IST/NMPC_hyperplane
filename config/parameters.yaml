@@ -25,7 +25,7 @@
     obstacle_avoidance:
       max_obstacles: 5              # 求解器支持的最大障碍物数量
       base_margin: 1.5              # 基础安全距离/机器人半径 (米)
-      smoothing_alpha: 0.2          # 法向量一阶低通滤波系数 (0-1)
+      smoothing_alpha: 0.5          # 法向量一阶低通滤波系数 (0-1)
       astar_reference_cost_weight: 0.2
       history_bias_weight: 0.2
 

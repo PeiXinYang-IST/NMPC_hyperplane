@@ -28,6 +28,7 @@ file(GLOB_RECURSE MODEL_C "${GEN_CODE_DIR}/*_model/*.c" "${GEN_CODE_DIR}/*_cost/
 add_executable(nmpc_node
   src/main.cpp
   src/nmpc_tracker_node.cpp  
+  src/sfc_generator.cpp
   ${TOP_C}    # Acados 接口实现
   ${MODEL_C}  # 具体的模型/代价/约束函数实现
 )

@@ -15,7 +15,7 @@ NmpcTrackerNode::NmpcTrackerNode() : Node("nmpc_node") {
     // NMPC 基础配置
     this->declare_parameter("nmpc_config.ref_velocity", 5.0);
     this->declare_parameter("nmpc_config.control_loop_ms", 50);
-    this->declare_parameter("nmpc_config.enable_warm_start", true);
+    this->declare_parameter("nmpc_config.enable_warm_start", true); 
     
     // 动态步长阈值
     this->declare_parameter("nmpc_config.curvature_threshold", 1.5); 

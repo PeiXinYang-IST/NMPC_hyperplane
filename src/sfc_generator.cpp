@@ -1,132 +1,162 @@
 #include "sfc_generator.hpp"
 #include <limits>
+#include <iostream>
 
-std::vector<SFC_WallParams> SFCGenerator::generate_corridor(
-    const std::vector<SFC_Pose>& horizon_refs,
-    const std::vector<SFC_Point>& obstacles) 
+SFCGenerator::SFCGenerator(const SFC_Config& config) : cfg_(config) {}
+
+void SFCGenerator::update_config(const SFC_Config& config) {
+    cfg_ = config;
+}
+
+std::vector<SFC_Constraint> SFCGenerator::generate_corridor(
+    const std::vector<Eigen::Vector2d>& path_points,
+    const std::vector<Eigen::Vector2d>& obstacles) 
 {
-    size_t N = horizon_refs.size();
-    std::vector<SFC_WallParams> corridor(N);
-    
-    // 临时存储左右宽度
-    std::vector<double> left_widths(N, cfg_.max_road_width);
-    std::vector<double> right_widths(N, cfg_.max_road_width);
+    size_t N = path_points.size();
+    std::vector<SFC_Constraint> constraints;
+    constraints.reserve(N);
 
-    // ---------------------------------------------------------
-    // Step 1: 左右分离的宽度计算 (Left/Right Independent Calculation)
-    // ---------------------------------------------------------
+    if (N == 0) return constraints;
+
+    // 1. 计算每个点的 Yaw 角
+    std::vector<double> yaws(N);
     for (size_t i = 0; i < N; ++i) {
-        const auto& ref = horizon_refs[i];
-        double yaw = ref.yaw;
-        double cy = std::cos(yaw);
-        double sy = std::sin(yaw);
-
-        // 如果没有障碍物，保持 max_width
-        if (obstacles.empty()) continue;
-
-        // 构建局部坐标系变换矩阵 (Global -> Local)
-        // Local X: 沿车道方向 (Longitudinal)
-        // Local Y: 垂直车道方向 (Lateral, 左正右负)
+        Eigen::Vector2d diff;
+        if (i < N - 1) {
+            diff = path_points[i+1] - path_points[i];
+        } else {
+            // 最后一个点沿用前一个方向
+            diff = path_points[i] - path_points[i-1];
+        }
         
+        // 防止重合点导致的计算错误
+        if (diff.norm() < 1e-3) {
+            yaws[i] = (i > 0) ? yaws[i-1] : 0.0;
+        } else {
+            yaws[i] = std::atan2(diff.y(), diff.x());
+        }
+    }
+
+    // 2. 遍历路径点生成约束
+    for (size_t i = 0; i < N; ++i) {
+        const Eigen::Vector2d& seed = path_points[i];
+        double yaw = yaws[i];
+        double cos_yaw = std::cos(yaw);
+        double sin_yaw = std::sin(yaw);
+
+        // 构建旋转矩阵 R_world_to_local (2x2)
+        // Local X 指向切线方向
+        Eigen::Matrix2d R_w2l;
+        R_w2l << cos_yaw, sin_yaw,
+                -sin_yaw, cos_yaw;
+
+        // 搜索附近的障碍物并转到局部坐标系
+        std::vector<Eigen::Vector2d> local_obs;
+        double search_r_sq = cfg_.search_radius * cfg_.search_radius;
+        
+        // 注意：这里使用暴力搜索。如果 obstacles 数量 > 500，建议使用 KDTree。
+        // 对于 NMPC 局部规划，通常只处理局部地图的点云，数量有限。
         for (const auto& obs : obstacles) {
-            double dx = obs.x - ref.x;
-            double dy = obs.y - ref.y;
-
-            // 投影到局部坐标系
-            // local_x = dx * cos(yaw) + dy * sin(yaw)
-            // local_y = -dx * sin(yaw) + dy * cos(yaw)
-            double local_x = dx * cy + dy * sy;
-            double local_y = -dx * sy + dy * cy;
-
-            // 关键优化：只考虑“当前横截面”附近的障碍物
-            // 例如只考虑前后 1.0m 范围内的障碍物对当前宽度的影响
-            // 避免弯道时计算到远处的点
-            if (std::abs(local_x) > 1.5) continue; 
-
-            double dist = std::sqrt(dx*dx + dy*dy); // 或者直接用 abs(local_y) 近似
-
-            if (local_y > 0) {
-                // 障碍物在左侧 -> 限制左宽
-                // 有效宽度 = 横向距离 - 安全余量
-                // 这里用 abs(local_y) 比 dist 更准确地描述“横向空间”
-                double valid_w = std::abs(local_y) - cfg_.security_margin;
-                if (valid_w < left_widths[i]) left_widths[i] = valid_w;
-            } else {
-                // 障碍物在右侧 -> 限制右宽
-                double valid_w = std::abs(local_y) - cfg_.security_margin;
-                if (valid_w < right_widths[i]) right_widths[i] = valid_w;
+            Eigen::Vector2d diff = obs - seed;
+            if (diff.squaredNorm() < search_r_sq) {
+                // 转换到局部坐标系: p_local = R * (p_world - seed)
+                local_obs.push_back(R_w2l * diff);
             }
         }
 
-        // 钳位 (Clamp)
-        left_widths[i] = std::clamp(left_widths[i], cfg_.min_valid_width, cfg_.max_road_width);
-        right_widths[i] = std::clamp(right_widths[i], cfg_.min_valid_width, cfg_.max_road_width);
+        // 计算收缩后的边界 [front, back, left, right]
+        Eigen::Vector4d bounds = shrink_box(local_obs);
+        double d_front = bounds[0];
+        double d_back  = bounds[1];
+        double d_left  = bounds[2];
+        double d_right = bounds[3];
+
+        // 构建局部 A, b
+        // n_front = (1, 0), n_back = (-1, 0), n_left = (0, 1), n_right = (0, -1)
+        Eigen::Matrix<double, 4, 2> A_local;
+        A_local <<  1.0,  0.0,
+                   -1.0,  0.0,
+                    0.0,  1.0,
+                    0.0, -1.0;
+        
+        Eigen::Vector4d b_local;
+        b_local << d_front, -d_back, d_left, -d_right;
+
+        // 转换回世界坐标系
+        // A_world = A_local * R_w2l
+        Eigen::Matrix<double, 4, 2> A_world = A_local * R_w2l;
+
+        // b_world = b_local + A_world * seed
+        // 这一步是因为: A_world * (x - seed) <= b_local  =>  A_world * x <= b_local + A_world * seed
+        Eigen::Vector4d b_world = b_local + A_world * seed;
+
+        // 计算顶点 (Local -> World)
+        // Local Vertices: (front, left), (back, left), (back, right), (front, right)
+        // 为了绘图顺序通常是逆时针
+        Eigen::Matrix<double, 4, 2> v_local;
+        v_local << d_front, d_left,  // Top-Right (relative to orientation)
+                   d_back,  d_left,  // Top-Left
+                   d_back,  d_right, // Bottom-Left
+                   d_front, d_right; // Bottom-Right
+        
+        // v_world = (R_w2l^T * v_local^T)^T + seed = v_local * R_w2l + seed
+        // 因为 R^T = R^-1, 我们要把局部点转回世界点
+        // p_world = R_w2l^T * p_local + seed
+        Eigen::Matrix<double, 4, 2> v_world;
+        for(int k=0; k<4; ++k) {
+             v_world.row(k) = (R_w2l.transpose() * v_local.row(k).transpose()).transpose() + seed.transpose();
+        }
+
+        SFC_Constraint cons;
+        cons.A = A_world;
+        cons.b = b_world;
+        cons.vertices = v_world;
+        constraints.push_back(cons);
     }
 
-    // ---------------------------------------------------------
-    // Step 2: 安全平滑 (Safe Smoothing)
-    // ---------------------------------------------------------
-    auto apply_safe_smoothing = [&](std::vector<double>& widths) {
-        if (widths.empty()) return;
-        std::vector<double> smoothed = widths;
-        // 前向滤波
-        for (size_t i = 1; i < N; ++i) {
-            double smooth_val = cfg_.smoothing_factor * widths[i] + 
-                                (1.0 - cfg_.smoothing_factor) * smoothed[i-1];
-            // [重要] 必须取 Min，确保不会把墙推到障碍物里面去
-            smoothed[i] = std::min(widths[i], smooth_val);
+    return constraints;
+}
+
+Eigen::Vector4d SFCGenerator::shrink_box(const std::vector<Eigen::Vector2d>& local_obs) {
+    // 初始边界
+    double d_front = cfg_.longitudinal_length / 2.0;
+    double d_back  = -cfg_.longitudinal_length / 2.0;
+    double d_left  = cfg_.search_radius;  // +Y
+    double d_right = -cfg_.search_radius; // -Y
+
+    double margin = cfg_.robot_radius + 0.1;
+
+    // 遍历局部障碍物进行收缩
+    for (const auto& p : local_obs) {
+        double px = p.x();
+        double py = p.y();
+
+        // 1. 左右收缩 (Lateral Contraction)
+        // 只有当障碍物位于当前的 [d_back, d_front] 范围内时，才考虑收缩左右边界
+        if (px > d_back && px < d_front) {
+            // 在左侧 (+Y)
+            if (py > 0 && py < d_left) {
+                d_left = std::max(0.0, py - margin);
+            }
+            // 在右侧 (-Y)
+            else if (py < 0 && py > d_right) {
+                d_right = std::min(0.0, py + margin);
+            }
         }
-        // 反向滤波 (可选，消除相位滞后)
-        for (int i = N - 2; i >= 0; --i) {
-            double smooth_val = cfg_.smoothing_factor * widths[i] + 
-                                (1.0 - cfg_.smoothing_factor) * smoothed[i+1];
-            smoothed[i] = std::min(smoothed[i], smooth_val);
+
+        // 2. 前后收缩 (Longitudinal Contraction)
+        // 只有当障碍物位于当前的 [d_right, d_left] 范围内时，才考虑收缩前后边界
+        if (py > d_right && py < d_left) {
+            // 在前方 (+X)
+            if (px > 0 && px < d_front) {
+                d_front = std::max(0.0, px - margin);
+            }
+            // 在后方 (-X)
+            else if (px < 0 && px > d_back) {
+                d_back = std::min(0.0, px + margin);
+            }
         }
-        widths = smoothed;
-    };
-
-    apply_safe_smoothing(left_widths);
-    apply_safe_smoothing(right_widths);
-
-    // ---------------------------------------------------------
-    // Step 3: 生成墙体参数
-    // ---------------------------------------------------------
-    for (size_t i = 0; i < N; ++i) {
-        const auto& ref = horizon_refs[i];
-        double cy = std::cos(ref.yaw);
-        double sy = std::sin(ref.yaw);
-
-        // 法向量指向路中心 (Constraint: n * (p_car - p_wall) >= 0)
-        // 左墙法向量: (sy, -cy) 指向右
-        double nx_left = sy;
-        double ny_left = -cy;
-        
-        // 右墙法向量: (-sy, cy) 指向左
-        double nx_right = -sy;
-        double ny_right = cy;
-
-        SFC_WallParams& wall = corridor[i];
-
-        // 左墙位置：沿法向量反方向延伸 left_width
-        // P_wall_left = P_ref - n_left * w_left (错，这样会指向左边)
-        // 你的原代码逻辑：
-        // wall.ox_left = ref.x - nx_left * w; 
-        // nx_left 是 (sy, -cy)。 若 yaw=0, nx=(0, -1). 
-        // P = (x, y) - (0, -1)*w = (x, y+w). 正确，在左边。
-        
-        wall.ox_left = ref.x - nx_left * left_widths[i];
-        wall.oy_left = ref.y - ny_left * left_widths[i];
-        wall.nx_left = nx_left;
-        wall.ny_left = ny_left;
-
-        wall.ox_right = ref.x - nx_right * right_widths[i];
-        wall.oy_right = ref.y - ny_right * right_widths[i];
-        wall.nx_right = nx_right;
-        wall.ny_right = ny_right;
-        
-        // 调试用：记录总宽度
-        wall.width = left_widths[i] + right_widths[i];
     }
 
-    return corridor;
+    return Eigen::Vector4d(d_front, d_back, d_left, d_right);
 }

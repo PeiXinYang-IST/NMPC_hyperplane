@@ -6,7 +6,10 @@ A ROS2 Nonlinear Model Predictive Control (NMPC) tracker with hyperplane-based o
 
 See the `pic` folder for demonstration videos.
 
+### hyperplane
 ![运行示意图](https://github.com/PeiXinYang-IST/NMPC_hyperplane/blob/main/pic/image.png)
+### SFC
+![运行示意图](https://github.com/PeiXinYang-IST/NMPC_hyperplane/blob/main/pic/image1.png)
 
 ## Features
 

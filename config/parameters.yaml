@@ -15,7 +15,7 @@
 
     track:
       road_half_width: 7.0
-      use_virtual_walls: True
+      use_virtual_walls: False
 
     perception:
       dbscan_eps: 1.2               # DBSCAN 邻域搜索半径

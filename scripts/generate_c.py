@@ -61,7 +61,7 @@ def export_race_model(n_obstacles=5):
 def setup_ocp(N_horizon=60, Tf=3.0):
     ocp = AcadosOcp()
     
-    N_OBS = 5 # 设定最大支持 5 个障碍物
+    N_OBS = 4 # 设定最大支持 5 个障碍物
     model, _ = export_race_model(n_obstacles=N_OBS)
     ocp.model = model
     
@@ -90,7 +90,7 @@ def setup_ocp(N_horizon=60, Tf=3.0):
     W = np.diag([50.0, 50.0, 1.0, 1.0, 1.0, 1.0, 1.0])
     ocp.cost.W = W
     ocp.cost.W_0 = W
-    ocp.cost.W_e = np.diag([50.0, 50.0, 2.0, 0.5]) # 终端权重
+    ocp.cost.W_e = np.diag([50.0, 50.0, 0.1, 0.5]) # 终端权重
     
     # 期望参考值 (Reference): 实际运行时会从外部（如全局路径）更新
     ocp.cost.yref = np.zeros(7)

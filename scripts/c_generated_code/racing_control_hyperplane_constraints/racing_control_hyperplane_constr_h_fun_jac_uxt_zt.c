@@ -36,6 +36,7 @@ extern "C" {
 #define casadi_s3 CASADI_PREFIX(s3)
 #define casadi_s4 CASADI_PREFIX(s4)
 #define casadi_s5 CASADI_PREFIX(s5)
+#define casadi_s6 CASADI_PREFIX(s6)
 
 /* Symbol visibility in DLLs */
 #ifndef CASADI_SYMBOL_EXPORT
@@ -55,17 +56,16 @@ extern "C" {
 static const casadi_int casadi_s0[3] = {5, 1, 1};
 static const casadi_int casadi_s1[3] = {2, 1, 1};
 static const casadi_int casadi_s2[3] = {0, 1, 1};
-static const casadi_int casadi_s3[3] = {25, 1, 1};
-static const casadi_int casadi_s4[18] = 
-  {7, 5, 0, 2, 4, 6, 8, 10,
-  2, 3, 2, 3, 2, 3, 2, 3,
-  2, 3};
-static const casadi_int casadi_s5[3] = {5, 0, 1};
+static const casadi_int casadi_s3[3] = {20, 1, 1};
+static const casadi_int casadi_s4[3] = {4, 1, 1};
+static const casadi_int casadi_s5[15] = 
+  {7, 4, 0, 2, 4, 6, 8, 2,
+  3, 2, 3, 2, 3, 2, 3};
+static const casadi_int casadi_s6[3] = {4, 0, 1};
 
-/* racing_control_hyperplane_constr_h_fun_jac_uxt_zt:(i0[5],i1[2],i2[0],i3[25])->(o0[5],o1[7x5,10nz],o2[5x0]) */
+/* racing_control_hyperplane_constr_h_fun_jac_uxt_zt:(i0[5],i1[2],i2[0],i3[20])->(o0[4],o1[7x4,8nz],o2[4x0]) */
 static int casadi_f0(const casadi_real** arg, casadi_real** res, casadi_int* iw, casadi_real* w, int mem) {
-  casadi_real a00, a01, a02, a03, a04, a05, a06, a07, a08, a09, a10, a11;
-  casadi_real a12;
+  casadi_real a00, a01, a02, a03, a04, a05, a06, a07, a08, a09, a10;
   a00=arg[3]? arg[3][3] : 0;
   a01=arg[0]? arg[0][0] : 0;
   a02=arg[3]? arg[3][0] : 0;
@@ -106,28 +106,16 @@ static int casadi_f0(const casadi_real** arg, casadi_real** res, casadi_int* iw,
   if (res[0]!=0) res[0][2]=a07;
   a07=arg[3]? arg[3][18] : 0;
   a09=arg[3]? arg[3][15] : 0;
-  a09=(a01-a09);
-  a09=(a07*a09);
-  a10=arg[3]? arg[3][19] : 0;
-  a11=arg[3]? arg[3][16] : 0;
-  a11=(a04-a11);
-  a11=(a10*a11);
-  a09=(a09+a11);
-  a11=arg[3]? arg[3][17] : 0;
-  a09=(a09-a11);
-  if (res[0]!=0) res[0][3]=a09;
-  a09=arg[3]? arg[3][23] : 0;
-  a11=arg[3]? arg[3][20] : 0;
-  a01=(a01-a11);
-  a01=(a09*a01);
-  a11=arg[3]? arg[3][24] : 0;
-  a12=arg[3]? arg[3][21] : 0;
-  a04=(a04-a12);
-  a04=(a11*a04);
+  a01=(a01-a09);
+  a01=(a07*a01);
+  a09=arg[3]? arg[3][19] : 0;
+  a10=arg[3]? arg[3][16] : 0;
+  a04=(a04-a10);
+  a04=(a09*a04);
   a01=(a01+a04);
-  a04=arg[3]? arg[3][22] : 0;
+  a04=arg[3]? arg[3][17] : 0;
   a01=(a01-a04);
-  if (res[0]!=0) res[0][4]=a01;
+  if (res[0]!=0) res[0][3]=a01;
   if (res[1]!=0) res[1][0]=a00;
   if (res[1]!=0) res[1][1]=a03;
   if (res[1]!=0) res[1][2]=a02;
@@ -135,9 +123,7 @@ static int casadi_f0(const casadi_real** arg, casadi_real** res, casadi_int* iw,
   if (res[1]!=0) res[1][4]=a05;
   if (res[1]!=0) res[1][5]=a08;
   if (res[1]!=0) res[1][6]=a07;
-  if (res[1]!=0) res[1][7]=a10;
-  if (res[1]!=0) res[1][8]=a09;
-  if (res[1]!=0) res[1][9]=a11;
+  if (res[1]!=0) res[1][7]=a09;
   return 0;
 }
 
@@ -210,9 +196,9 @@ CASADI_SYMBOL_EXPORT const casadi_int* racing_control_hyperplane_constr_h_fun_ja
 
 CASADI_SYMBOL_EXPORT const casadi_int* racing_control_hyperplane_constr_h_fun_jac_uxt_zt_sparsity_out(casadi_int i) {
   switch (i) {
-    case 0: return casadi_s0;
-    case 1: return casadi_s4;
-    case 2: return casadi_s5;
+    case 0: return casadi_s4;
+    case 1: return casadi_s5;
+    case 2: return casadi_s6;
     default: return 0;
   }
 }

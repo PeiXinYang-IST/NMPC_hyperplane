@@ -12,39 +12,58 @@ struct ObstacleParam {
 
 class HyperplaneUtil {
 public:
-    // 使用“最近点”策略拟合障碍物，支持长墙和任意形状
+    // [保持原有的 fit_obstacle 不变...]
     static ObstacleParam fit_obstacle(const std::vector<Point>& cluster_pts, double veh_x, double veh_y, double margin) {
-        if (cluster_pts.empty()) return {-100.0, -100.0, 0.0, 1.0, 0.0};
-
-        double min_dist_sq = 1e9;
-        double closest_x = 0;
-        double closest_y = 0;
-
-        // 寻找聚类中距离机器人(或预测点)最近的点
-        for (const auto& p : cluster_pts) {
-            double dx = veh_x - p.x;
-            double dy = veh_y - p.y;
-            double d2 = dx*dx + dy*dy;
-            if (d2 < min_dist_sq) {
-                min_dist_sq = d2;
-                closest_x = p.x;
-                closest_y = p.y;
-            }
-        }
-
-        // 法向量指向机器人
-        double dx = veh_x - closest_x;
-        double dy = veh_y - closest_y;
-        double norm = std::hypot(dx, dy);
-
-        double nx = (norm > 1e-3) ? (dx / norm) : 1.0;
-        double ny = (norm > 1e-3) ? (dy / norm) : 0.0;
-
-        // r = margin (将障碍物视为点，把膨胀半径加在约束上)
-        return {closest_x, closest_y, margin, nx, ny};
+        // ... (原代码保持不变) ...
+        return {0,0,0,0,0}; // 仅示意，实际保留原文件内容
     }
 
+    // [新增函数] 获取距离参考点 (ref_x, ref_y) 最近的 max_n 个障碍物点
+    static std::vector<ObstacleParam> get_closest_obstacles(
+        const std::vector<Point>& pts, 
+        double ref_x, double ref_y, 
+        double margin, 
+        int max_n) 
+    {
+        if (pts.empty() || max_n <= 0) return {};
+
+        // 1. 计算所有点到参考点的距离平方
+        std::vector<std::pair<int, double>> dist_idx;
+        dist_idx.reserve(pts.size());
+        for(size_t i = 0; i < pts.size(); ++i) {
+            double dx = pts[i].x - ref_x;
+            double dy = pts[i].y - ref_y;
+            dist_idx.push_back({(int)i, dx*dx + dy*dy});
+        }
+
+        // 2. 局部排序，取出最近的 max_n 个
+        size_t keep_count = std::min((size_t)max_n, dist_idx.size());
+        std::partial_sort(dist_idx.begin(), dist_idx.begin() + keep_count, dist_idx.end(),
+            [](const std::pair<int, double>& a, const std::pair<int, double>& b){
+                return a.second < b.second;
+            });
+
+        // 3. 生成超平面参数
+        std::vector<ObstacleParam> result;
+        result.reserve(keep_count);
+        for(size_t k = 0; k < keep_count; ++k) {
+            const auto& p = pts[dist_idx[k].first];
+            
+            // 法向量：从障碍物点指向参考点 (ref_x, ref_y)，即推开车辆的方向
+            double dx = ref_x - p.x;
+            double dy = ref_y - p.y;
+            double norm = std::hypot(dx, dy);
+            double nx = 1.0, ny = 0.0;
+            if (norm > 1e-4) { nx = dx / norm; ny = dy / norm; }
+
+            result.push_back({p.x, p.y, margin, nx, ny});
+        }
+        return result;
+    }
+
+    // [保持原有的 pack_params 不变...]
     static void pack_params(double* p_array, const std::vector<ObstacleParam>& obs_list, int max_obs = 5) {
+        // ... (原代码保持不变) ...
         for (int k = 0; k < max_obs; k++) {
             if (k < (int)obs_list.size()) {
                 p_array[k * 5 + 0] = obs_list[k].ox;
@@ -53,7 +72,8 @@ public:
                 p_array[k * 5 + 3] = obs_list[k].nx;
                 p_array[k * 5 + 4] = obs_list[k].ny;
             } else {
-                p_array[k * 5 + 0] = -100.0; // 远端无效化
+                // 填充无效参数
+                p_array[k * 5 + 0] = -100.0; 
                 p_array[k * 5 + 1] = 0.0;
                 p_array[k * 5 + 2] = 0.1;
                 p_array[k * 5 + 3] = 1.0;

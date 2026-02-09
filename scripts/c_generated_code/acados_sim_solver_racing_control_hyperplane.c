@@ -199,10 +199,6 @@ int racing_control_hyperplane_acados_sim_create(racing_control_hyperplane_sim_so
     p[16] = 1000;
     p[17] = 1;
     p[18] = 1;
-    p[20] = 1000;
-    p[21] = 1000;
-    p[22] = 1;
-    p[23] = 1;
 
     racing_control_hyperplane_acados_sim_update_params(capsule, p, np);
     free(p);

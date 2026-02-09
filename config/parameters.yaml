@@ -24,7 +24,7 @@
 
     obstacle_avoidance:
       max_obstacles: 5              # 求解器支持的最大障碍物数量
-      base_margin: 1.5              # 基础安全距离/机器人半径 (米)
+      base_margin: 1.0              # 基础安全距离/机器人半径 (米)
       smoothing_alpha: 0.5          # 法向量一阶低通滤波系数 (0-1)
       astar_reference_cost_weight: 0.2
       history_bias_weight: 0.2
@@ -41,3 +41,7 @@
       omega_angular: 10.0
       b0_linear: 1.0
       b0_angular: 1.0
+    sfc:
+      robot_radius: 1.0
+      search_radius: 5.0
+      longitudinal_length: 4.0

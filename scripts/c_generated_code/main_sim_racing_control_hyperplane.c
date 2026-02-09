@@ -105,11 +105,6 @@ int main()
     p[17] = 1;
     p[18] = 1;
     p[19] = 0;
-    p[20] = 1000;
-    p[21] = 1000;
-    p[22] = 1;
-    p[23] = 1;
-    p[24] = 0;
 
     racing_control_hyperplane_acados_sim_update_params(capsule, p, NP);
   

@@ -425,10 +425,6 @@ void racing_control_hyperplane_acados_create_set_default_parameters(racing_contr
     p[16] = 1000;
     p[17] = 1;
     p[18] = 1;
-    p[20] = 1000;
-    p[21] = 1000;
-    p[22] = 1;
-    p[23] = 1;
 
     for (int i = 0; i <= N; i++) {
         racing_control_hyperplane_acados_update_params(capsule, i, p, NP);
@@ -606,7 +602,7 @@ void racing_control_hyperplane_acados_setup_nlp_in(racing_control_hyperplane_sol
     // change only the non-zero elements:
     W_e[0+(NYN) * 0] = 50;
     W_e[1+(NYN) * 1] = 50;
-    W_e[2+(NYN) * 2] = 2;
+    W_e[2+(NYN) * 2] = 0.1;
     W_e[3+(NYN) * 3] = 0.5;
     ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, N, "W", W_e);
     free(W_e);
@@ -634,22 +630,18 @@ void racing_control_hyperplane_acados_setup_nlp_in(racing_control_hyperplane_sol
     Zl[1] = 10000;
     Zl[2] = 10000;
     Zl[3] = 10000;
-    Zl[4] = 10000;
     Zu[0] = 10000;
     Zu[1] = 10000;
     Zu[2] = 10000;
     Zu[3] = 10000;
-    Zu[4] = 10000;
     zl[0] = 10000;
     zl[1] = 10000;
     zl[2] = 10000;
     zl[3] = 10000;
-    zl[4] = 10000;
     zu[0] = 10000;
     zu[1] = 10000;
     zu[2] = 10000;
     zu[3] = 10000;
-    zu[4] = 10000;
 
     for (int i = 1; i < N; i++)
     {
@@ -762,7 +754,6 @@ void racing_control_hyperplane_acados_setup_nlp_in(racing_control_hyperplane_sol
     uh[1] = 1000000000;
     uh[2] = 1000000000;
     uh[3] = 1000000000;
-    uh[4] = 1000000000;
 
     for (int i = 1; i < N; i++)
     {
@@ -791,7 +782,6 @@ void racing_control_hyperplane_acados_setup_nlp_in(racing_control_hyperplane_sol
     idxsh[1] = 1;
     idxsh[2] = 2;
     idxsh[3] = 3;
-    idxsh[4] = 4;
     double* lush = calloc(2*NSH, sizeof(double));
     double* lsh = lush;
     double* ush = lush + NSH;
@@ -1123,7 +1113,7 @@ int racing_control_hyperplane_acados_update_params(racing_control_hyperplane_sol
 {
     int solver_status = 0;
 
-    int casadi_np = 25;
+    int casadi_np = 20;
     if (casadi_np != np) {
         printf("acados_update_params: trying to set %i parameters for external functions."
             " External function has %i parameters. Exiting.\n", np, casadi_np);

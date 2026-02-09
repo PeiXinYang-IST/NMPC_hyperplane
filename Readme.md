@@ -9,7 +9,7 @@ See the `pic` folder for demonstration videos.
 ### hyperplane
 ![运行示意图](https://github.com/PeiXinYang-IST/NMPC_hyperplane/blob/main/pic/image.png)
 ### SFC
-![运行示意图](https://github.com/PeiXinYang-IST/NMPC_hyperplane/blob/main/pic/image1.png)
+![运行示意图](https://github.com/PeiXinYang-IST/NMPC_hyperplane/blob/main/pic/image1.jpg)
 
 ## Features
 

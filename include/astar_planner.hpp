@@ -24,14 +24,15 @@ public:
         double resolution = 0.2; 
         double margin = 1.0;     
         int grid_padding = 15;
-        // [新增] 历史路径吸引权重
+        // 历史路径吸引权重
         double history_bias_weight = 0.5; 
+        // [新增] 参考路径吸引权重 (建议 0.5 - 2.0)
+        double reference_cost_weight = 1.0; 
     };
 
     AStarPlanner(Config config) : cfg_(config) {}
 
-    static std::vector<Point> smooth_path(const std::vector<Point>& path, double weight_data=0.5, double weight_smooth=0.25, double tolerance=0.00001) {
-        // ... (保持原样)
+    static std::vector<Point> smooth_path(const std::vector<Point>& path, double weight_data=0.5, double weight_smooth=0.3, double tolerance=0.00001) {
          if (path.size() < 3) return path;
         std::vector<Point> new_path = path;
         double change = tolerance;
@@ -49,7 +50,6 @@ public:
     }
 
     static std::vector<Point> resample_path(const std::vector<Point>& raw_path, double step_size) {
-        // ... (保持原样)
         if (raw_path.size() < 2) return raw_path;
         std::vector<Point> resampled; resampled.push_back(raw_path.front());
         double accumulated_dist = 0.0;
@@ -69,11 +69,12 @@ public:
         return resampled;
     }
 
-    // --- 增加可选的历史路径输入 ---
+    // [修改] 增加 global_ref_path 输入
     std::vector<Point> plan(double start_x, double start_y, 
                             double goal_x, double goal_y, 
                             const std::vector<Point>& all_points,
-                            const std::vector<Point>& history_path = {}) 
+                            const std::vector<Point>& history_path = {},
+                            const std::vector<Point>& global_ref_path = {}) // 新增参数
     {
         int min_gx, max_gx, min_gy, max_gy;
         calc_grid_bounds(start_x, start_y, goal_x, goal_y, all_points, min_gx, max_gx, min_gy, max_gy);
@@ -86,7 +87,7 @@ public:
         int margin_cells = std::ceil(cfg_.margin / cfg_.resolution);
         int margin_sq = margin_cells * margin_cells;
 
-        // 栅格化障碍物
+        // 1. 栅格化障碍物
         for (const auto& pt : all_points) {
             int cx, cy;
             world_to_grid(pt.x, pt.y, cx, cy, min_gx, min_gy);
@@ -102,14 +103,30 @@ public:
             }
         }
 
+        // 2. 预处理历史路径 (World -> Grid)
         std::vector<std::pair<int, int>> history_grid_pts;
         if (!history_path.empty()) {
             for(const auto& p : history_path) {
                 int hx, hy;
                 world_to_grid(p.x, p.y, hx, hy, min_gx, min_gy);
-                // 只存 bounding box 内的点
                 if(hx >= 0 && hx < width && hy >= 0 && hy < height) {
                     history_grid_pts.push_back({hx, hy});
+                }
+            }
+        }
+
+        // 3. [新增] 预处理参考路径 (World -> Grid)
+        // 只提取位于当前 Grid 范围内的参考点，减少后续搜索计算量
+        std::vector<std::pair<int, int>> ref_grid_pts;
+        if (!global_ref_path.empty()) {
+            // 简单的裁剪逻辑：只取 bounding box 内的点
+            // 为了防止边界效应，稍微扩大一点筛选范围
+            int pad = 5; 
+            for (const auto& p : global_ref_path) {
+                int rx, ry;
+                world_to_grid(p.x, p.y, rx, ry, min_gx, min_gy);
+                if (rx >= -pad && rx < width + pad && ry >= -pad && ry < height + pad) {
+                    ref_grid_pts.push_back({rx, ry});
                 }
             }
         }
@@ -120,7 +137,7 @@ public:
 
         if (!is_valid(start_gx, start_gy, width, height, occupancy_grid)) return {};
 
-        return run_astar(start_gx, start_gy, goal_gx, goal_gy, width, height, occupancy_grid, min_gx, min_gy, history_grid_pts);
+        return run_astar(start_gx, start_gy, goal_gx, goal_gy, width, height, occupancy_grid, min_gx, min_gy, history_grid_pts, ref_grid_pts);
     }
 
 private:
@@ -128,10 +145,10 @@ private:
 
     std::vector<Point> run_astar(int sx, int sy, int gx, int gy, int w, int h, 
                                  const std::vector<int8_t>& grid, int min_gx, int min_gy,
-                                 const std::vector<std::pair<int, int>>& history_pts) 
+                                 const std::vector<std::pair<int, int>>& history_pts,
+                                 const std::vector<std::pair<int, int>>& ref_pts) // 新增参数
     {
         struct Node { int x, y; double g, h; Node* parent; };
-        // g + h 越小越好
         auto cmp = [](Node* a, Node* b){ return (a->g + a->h) > (b->g + b->h); };
         std::priority_queue<Node*, std::vector<Node*>, decltype(cmp)> open_set(cmp);
         std::unordered_map<int, Node*> all_nodes; 
@@ -143,10 +160,10 @@ private:
         Node* final_node = nullptr;
         const int dx[8] = {1, 0, -1, 0, 1, 1, -1, -1};
         const int dy[8] = {0, 1, 0, -1, 1, -1, 1, -1};
-        const double move_cost[8] = {1.0, 1.0, 1.0, 1.0, 1.414, 1.414, 1.414, 1.414};
+        const double move_cost_base[8] = {1.0, 1.0, 1.0, 1.0, 1.414, 1.414, 1.414, 1.414};
 
         int iter = 0;
-        while(!open_set.empty() && iter++ < 30000) { 
+        while(!open_set.empty() && iter++ < 40000) { // 稍微增加迭代上限
             Node* curr = open_set.top(); open_set.pop();
 
             if(std::abs(curr->x - gx) <= 1 && std::abs(curr->y - gy) <= 1) {
@@ -158,26 +175,36 @@ private:
                 if(nx < 0 || nx >= w || ny < 0 || ny >= h) continue;
                 if(grid[ny*w+nx] == 1) continue; 
 
-                // 计算基础移动代价
-                double step_cost = move_cost[i];
+                // --- Cost 计算区域 ---
+                double step_cost = move_cost_base[i];
                 
-                // 如果当前点离历史路径越远，代价越高
+                // 1. 历史路径吸引 (保持原样)
                 if (!history_pts.empty()) {
                     double min_dist_sq = 1e9;
-                    // 为了效率，只搜最近的几个点或者粗略搜索
-                    // 这里做一个简单的最近点距离查找 (实际可以优化为KD-Tree或Distance Transform)
-                    // 由于A*节点展开是局部的，我们可以只搜历史路径的一个滑动窗口，这里简化为全搜
-                    // 但为了性能，我们限制搜索范围或者只惩罚距离过远
-                    // 简单实现：
                     for(const auto& hp : history_pts) {
-                        double d2 = (nx - hp.first)*(nx - hp.first) + (ny - hp.second)*(ny - hp.second);
+                        double d2 = (double)((nx - hp.first)*(nx - hp.first) + (ny - hp.second)*(ny - hp.second));
                         if(d2 < min_dist_sq) min_dist_sq = d2;
-                        if(min_dist_sq < 2.0) break; // 已经够近了
+                        if(min_dist_sq < 2.0) break; 
                     }
-                    // 距离越远，step_cost 增加越多
-                    // 权重调节：如果 history_bias_weight 很大，就会死死吸住旧路径
                     step_cost += cfg_.history_bias_weight * std::sqrt(min_dist_sq);
                 }
+
+                // 2. [新增] 参考路径吸引 (Reference Path Bias)
+                // 计算当前节点 (nx, ny) 距离最近参考点的距离
+                if (!ref_pts.empty()) {
+                    double min_ref_dist_sq = 1e9;
+                    // 这里遍历所有的局部 ref_pts
+                    // 性能优化：如果 ref_pts 点数太多 (比如 >100)，可能影响性能
+                    // 但通常局部窗口内的 ref path 点数在 20-50 左右，遍历是可以接受的
+                    for (const auto& rp : ref_pts) {
+                        double d2 = (double)((nx - rp.first)*(nx - rp.first) + (ny - rp.second)*(ny - rp.second));
+                        if (d2 < min_ref_dist_sq) min_ref_dist_sq = d2;
+                        if (min_ref_dist_sq < 1.0) break; // 已经在路径上了，无需继续
+                    }
+                    // 增加惩罚：距离越远，cost 越高
+                    step_cost += cfg_.reference_cost_weight * std::sqrt(min_ref_dist_sq);
+                }
+                // --------------------
 
                 double new_g = curr->g + step_cost;
                 int idx = ny*w+nx;

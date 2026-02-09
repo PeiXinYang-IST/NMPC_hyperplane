@@ -7,7 +7,7 @@ import numpy as np
 
 class TrackGenerator:
     """ 赛道生成器：支持直线、圆弧拼接 (保持不变) """
-    def __init__(self, resolution=0.2):
+    def __init__(self, resolution=0.1):
         self.resolution = resolution
         # 存储航点 [x, y, yaw, cumulative_dist]
         self.points = [] 

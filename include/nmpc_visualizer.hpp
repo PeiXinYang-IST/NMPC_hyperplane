@@ -40,7 +40,7 @@ public:
             array.markers.push_back(make_marker(i + 1000, pred_traj[i][0], pred_traj[i][1], 0.1, 1.0, 0.0, 0.0, 0.8, stamp));
         
         for (size_t i = 0; i < target_path_viz.size(); ++i) {
-            float r=0, g=0, b=1.0, radius=0.04;
+            float r=0, g=0, b=1.0, radius=0.2;
             if (is_astar_active) { r=0.0; g=1.0; b=1.0; radius=0.06; } // 青色
             array.markers.push_back(make_marker(i + 2000, target_path_viz[i].first, target_path_viz[i].second, radius, r, g, b, 0.6, stamp));
         }

@@ -1,36 +1,160 @@
-### demo见pic文件夹
+# NMPC Tracker
 
-![运行示意图](https://github.com/PeiXinYang-IST/NMPC_hyperplane/blob/main/pic/image.png)  
+A ROS2 Nonlinear Model Predictive Control (NMPC) tracker with hyperplane-based obstacle avoidance, featuring Acados optimization, DBSCAN clustering, and A* planning.
 
-### acados生成c code
+## Demo
 
-#### cd scripts
-#### python3 generate_c.py
-#### echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/mnt/c/Users/yang/Downloads/acados/lib' >> ~/.bashrc   换成自己的
+See the `pic` folder for demonstration videos.
 
-### 编译
+![运行示意图](https://github.com/PeiXinYang-IST/NMPC_hyperplane/blob/main/pic/image.png)
 
-#### cd ..
-#### colcon build
+## Features
 
-#### source install/setup.bash
+- **NMPC Control**: High-performance nonlinear model predictive control using Acados
+- **Obstacle Perception**: DBSCAN clustering for obstacle detection and tracking
+- **Path Planning**: A* global planner with dynamic obstacle avoidance
+- **Hyperplane-based Control**: Safety-critical trajectory tracking
+- **Extended State Observer**: ESO-based disturbance estimation (dynamic friction, slope)
 
-## launch
-### cpp版
-#### ros2 launch nmpc_tracker nmpc_test_launch.py
-### python demo
-#### cd scripts
-#### python3 test.py
+## Requirements
 
-### 2026 2.6
-#### 1.测试中发现如果对于实际速度与cmd_vel差距较大时，nmpc会有问题（可能与热启动有关），需要做系统辨识（cmd_vel与实际速度的映射关系，二阶拟合）
-#### 2.加入eso拓张状态观测器处理动态摩擦以及上下坡场景
-#### 3.对于运行时间长后X和Y的数值过大带来数值不稳定导致求解失败的问题转为local frame求解
-#### 4.在当前横向误差大于一定阈值（路宽的一定比例之后 开启recovery mode，desired vel设置为0.5m/s，全力拉回
-#### （以上全部前提都必须下位机较严格执行速度）
-### TODO:
-#### 1.系统辨识cmd_vel与实际速度的映射关系，二阶拟合
-#### 2.最大角速度 最大角加速度 最大加速度 最大速度
-#### 3.对于上下坡场景的处理
-#### 4.验证eso可行性，参数设置
-#### 5.参数设置
+- Ubuntu 22.04
+- ROS2 Humble/Foxy
+- C++20
+- Acados (with HPIPM and BLASFEO)
+- CMake 3.8+
+
+---
+
+## Setup
+
+### 1. Install ROS2
+
+```bash
+sudo apt update
+sudo apt install ros-humble-rclcpp ros-humble-nav-msgs ros-humble-sensor-msgs \
+  ros-humble-geometry-msgs ros-humble-visualization-msgs ros-humble-tf2 \
+  ros-humble-tf2-geometry-msgs ros-humble-tf2-ros ros-humble-launch
+```
+
+### 2. Install Acados
+
+```bash
+git clone https://github.com/acados/acados.git
+cd acados
+mkdir -p build && cd build
+cmake .. -DACADOS_WITH_OPENMP=OFF
+make install
+```
+
+### 3. Configure Acados Path
+
+```bash
+# Replace <YOUR_ACADOS_PATH> with your actual acados installation path
+export ACADOS_INSTALL_DIR="<YOUR_ACADOS_PATH>"
+
+# Add to ~/.bashrc for persistence
+echo "export ACADOS_INSTALL_DIR=\"<YOUR_ACADOS_PATH>\"" >> ~/.bashrc
+echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:<YOUR_ACADOS_PATH>/lib' >> ~/.bashrc
+source ~/.bashrc
+```
+
+### 4. Generate Acados C Code
+
+```bash
+cd scripts
+python3 generate_c.py
+```
+
+### 5. Build the Project
+
+```bash
+cd ..
+colcon build
+source install/setup.bash
+```
+
+---
+
+## QuickStart
+
+### Option 1: C++ Version
+
+```bash
+# Terminal 1: Launch the tracker
+ros2 launch nmpc_tracker nmpc_test_launch.py
+
+# Terminal 2: Run simulation demo
+cd scripts
+python3 test.py
+```
+
+### Option 2: Python Demo
+
+```bash
+cd scripts
+python3 test.py
+```
+
+---
+
+## Configuration
+
+Key parameters can be tuned via the launch file or command line:
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `nmpc_config.ref_velocity` | 5.0 | Reference velocity (m/s) |
+| `nmpc_config.control_loop_ms` | 50 | Control loop period (ms) |
+| `perception.dbscan_eps` | 1.2 | DBSCAN epsilon for clustering |
+| `perception.dbscan_min_pts` | 3 | Minimum points per cluster |
+| `obstacle_avoidance.base_margin` | 0.8 | Safety margin (m) |
+| `robot_limits.max_linear_velocity` | 6.0 | Max velocity (m/s) |
+| `robot_limits.max_angular_velocity` | 2.5 | Max angular velocity (rad/s) |
+
+---
+
+## Known Issues & TODO
+
+- **Speed Mapping**: If actual velocity differs significantly from `cmd_vel`, system identification may be needed (second-order fitting for `cmd_vel` to actual velocity mapping)
+- **Slope Handling**: ESO extension needed for dynamic friction and slope scenarios
+- **Large Coordinate Values**: Convert to local frame after extended operation to prevent numerical instability
+- **Recovery Mode**: When lateral error exceeds threshold, enable recovery mode with low velocity (0.5 m/s)
+
+### TODO List
+- [ ] System identification for `cmd_vel` to actual velocity mapping
+- [ ] Set max angular velocity, acceleration, and velocity limits
+- [ ] Slope handling improvements
+- [ ] Validate ESO feasibility and parameter tuning
+- [ ] Parameter optimization
+
+---
+
+## Project Structure
+
+```
+nmpc_tracker/
+├── include/              # Header files
+│   ├── nmpc_tracker_node.hpp
+│   ├── nmpc_visualizer.hpp
+│   ├── sfc_generator.hpp
+│   ├── astar_planner.hpp
+│   ├── eso.hpp
+│   ├── hyperplane_util.hpp
+│   └── DBSCAN.hpp
+├── src/                  # Source files
+│   ├── nmpc_tracker_node.cpp
+│   ├── sfc_generator.cpp
+│   └── main.cpp
+├── scripts/              # Python scripts
+│   ├── simulation.py
+│   ├── path_publisher.py
+│   ├── cubic_spline.py
+│   ├── test.py
+│   └── generate_c.py
+├── launch/               # Launch files
+├── pic/                  # Demo videos and images
+├── CMakeLists.txt
+├── package.xml
+└── README.md
+```

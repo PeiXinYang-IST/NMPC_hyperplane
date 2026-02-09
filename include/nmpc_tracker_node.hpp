@@ -1,6 +1,7 @@
 #ifndef NMPC_TRACKER_NODE_HPP
 #define NMPC_TRACKER_NODE_HPP
 
+// ... (原有的 includes)
 #include <rclcpp/rclcpp.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <nav_msgs/msg/path.hpp>
@@ -17,6 +18,7 @@
 #include <memory>
 #include <algorithm>
 #include <string>
+#include <Eigen/Dense> // [新增] 必须包含 Eigen
 
 extern "C" {
     #include "acados_solver_racing_control_hyperplane.h"
@@ -27,6 +29,7 @@ extern "C" {
 #include "nmpc_visualizer.hpp"
 #include "astar_planner.hpp"
 #include "eso.hpp" 
+#include "sfc_generator.hpp" // [新增] SFC 头文件
 
 class NmpcTrackerNode : public rclcpp::Node {
 public:
@@ -36,33 +39,37 @@ public:
 private:
     void solve_cycle();
 
+    // ... (保留原有的辅助函数声明) ...
     double unwrap_yaw(double target_yaw, double current_yaw);
     int get_closest_path_index(double x, double y);
     bool is_in_fov(double ox, double oy);
-
     std::vector<Point> get_all_obstacle_points();
     bool check_path_collision(const std::vector<Point>& path, double margin);
     std::vector<Point> prune_path_by_distance(const std::vector<Point>& path, double curr_x, double curr_y, double lookahead_dist);
     void apply_normal_smoothing(ObstacleParam& p, const std::string& key, double alpha, double max_rot_rad);
-
     void setup_ros_interfaces();
     void publish_command(ocp_nlp_config* conf, ocp_nlp_dims* dims, ocp_nlp_out* out, double dist_lin, double dist_ang);
     void publish_emergency_brake();
+
+    // [修改] 更新 render_visualization 签名，接受 sfc_corridor
     void render_visualization(const std::vector<std::vector<double>>& pred_traj, 
                               const std::vector<NmpcVisualizer::VizObs>& constraint_viz, 
                               const std::vector<std::pair<double, double>>& target_path_viz,
                               const std::vector<std::pair<double, double>>& astar_guide_viz,
                               double goal_x, double goal_y,
                               const std::vector<geometry_msgs::msg::Point>& curve_pts,
-                              const std::vector<std_msgs::msg::ColorRGBA>& curve_cols);
+                              const std::vector<std_msgs::msg::ColorRGBA>& curve_cols,
+                              const std::vector<SFC_Constraint>& sfc_corridor); // [新增参数]
 
     racing_control_hyperplane_solver_capsule* capsule_;
     std::unique_ptr<NmpcVisualizer> visualizer_;
     std::unique_ptr<DBSCAN> cluster_worker_;
     std::unique_ptr<AStarPlanner> astar_planner_;
+    std::unique_ptr<SFCGenerator> sfc_gen_; // [新增] SFC 生成器实例
     std::unique_ptr<ESO> linear_eso_;
     std::unique_ptr<ESO> angular_eso_;
 
+    // ... (保留原有的 ROS 接口和变量) ...
     rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_odom_;
     rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sub_cloud_;
     rclcpp::Subscription<nav_msgs::msg::Path>::SharedPtr sub_path_;
@@ -74,11 +81,9 @@ private:
     std::mutex cluster_mutex_;
     std::map<int, std::vector<Point>> current_clusters_;
     std::map<std::string, std::pair<double, double>> prev_normal_map_;
-    
     std::vector<Point> last_guide_path_;
     double last_cmd_acc_ = 0.0;   
     double last_cmd_w_acc_ = 0.0; 
-
     double cur_x_[5]; 
     nav_msgs::msg::Path full_path_;
     bool odom_ok_ = false;

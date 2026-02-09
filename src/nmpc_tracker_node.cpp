@@ -2,6 +2,7 @@
 #include <sensor_msgs/point_cloud2_iterator.hpp>
 #include <chrono> 
 #include <cmath>
+#include <algorithm> // std::clamp, std::min, std::max
 
 #define N_PARAM 25    
 #define N_HORIZON 60  
@@ -23,9 +24,6 @@ NmpcTrackerNode::NmpcTrackerNode() : Node("nmpc_node") {
     // 曲率权重参数
     this->declare_parameter("nmpc_config.global_curvature_weight", 1.0);
     this->declare_parameter("nmpc_config.local_curvature_weight", 1.5);
-    
-    // [新增] 局部曲率平滑系数 (0.0~1.0), 越小越平滑，越大响应越快
-    // 建议 0.3 左右：既能过滤 A* 的抖动，又能及时响应新的避障弯道
     this->declare_parameter("nmpc_config.local_curvature_smoothing", 0.3);
 
     // 赛道与感知配置
@@ -40,8 +38,6 @@ NmpcTrackerNode::NmpcTrackerNode() : Node("nmpc_node") {
     this->declare_parameter("obstacle_avoidance.base_margin", 0.8); 
     this->declare_parameter("obstacle_avoidance.smoothing_alpha", 0.15); 
     this->declare_parameter("obstacle_avoidance.history_bias_weight", 0.2); 
-    
-    // A* 参考路径权重
     this->declare_parameter("obstacle_avoidance.astar_reference_cost_weight", 1.0); 
     
     // 安全策略配置
@@ -60,6 +56,11 @@ NmpcTrackerNode::NmpcTrackerNode() : Node("nmpc_node") {
     this->declare_parameter("eso.omega_angular", 5.0); 
     this->declare_parameter("eso.b0_linear", 1.0);      
     this->declare_parameter("eso.b0_angular", 1.0);     
+
+    // [SFC 配置]
+    this->declare_parameter("sfc.robot_radius", 0.5);
+    this->declare_parameter("sfc.search_radius", 6.0);
+    this->declare_parameter("sfc.longitudinal_length", 4.0);
 
     // ==========================================
     // 2. 模块初始化
@@ -81,23 +82,26 @@ NmpcTrackerNode::NmpcTrackerNode() : Node("nmpc_node") {
     double base_margin = this->get_parameter("obstacle_avoidance.base_margin").as_double();
     AStarPlanner::Config astar_cfg;
     astar_cfg.resolution = 0.3; 
-    // [Config] A* 搜索时使用 1.2 倍的安全裕度
     astar_cfg.margin = base_margin * 1.2; 
     astar_cfg.history_bias_weight = this->get_parameter("obstacle_avoidance.history_bias_weight").as_double();
     astar_cfg.reference_cost_weight = this->get_parameter("obstacle_avoidance.astar_reference_cost_weight").as_double();
-    
     astar_planner_ = std::make_unique<AStarPlanner>(astar_cfg);
 
+    // SFC Generator
+    SFC_Config sfc_cfg;
+    sfc_cfg.robot_radius = this->get_parameter("sfc.robot_radius").as_double();
+    sfc_cfg.search_radius = this->get_parameter("sfc.search_radius").as_double();
+    sfc_cfg.longitudinal_length = this->get_parameter("sfc.longitudinal_length").as_double();
+    sfc_gen_ = std::make_unique<SFCGenerator>(sfc_cfg);
+
     // ESO
-    ESO::Config lin_cfg;
-    lin_cfg.dt = DT; 
+    ESO::Config lin_cfg; lin_cfg.dt = DT; 
     lin_cfg.omega_o = this->get_parameter("eso.omega_linear").as_double();
     lin_cfg.b0 = this->get_parameter("eso.b0_linear").as_double();
     lin_cfg.max_dist = 10.0; 
     linear_eso_ = std::make_unique<ESO>(lin_cfg);
 
-    ESO::Config ang_cfg;
-    ang_cfg.dt = DT;
+    ESO::Config ang_cfg; ang_cfg.dt = DT;
     ang_cfg.omega_o = this->get_parameter("eso.omega_angular").as_double();
     ang_cfg.b0 = this->get_parameter("eso.b0_angular").as_double();
     ang_cfg.max_dist = 10.0; 
@@ -106,9 +110,7 @@ NmpcTrackerNode::NmpcTrackerNode() : Node("nmpc_node") {
     setup_ros_interfaces();
     
     bool enable_eso = this->get_parameter("eso.enable").as_bool();
-    bool enable_ws = this->get_parameter("nmpc_config.enable_warm_start").as_bool();
-    RCLCPP_INFO(this->get_logger(), "NMPC Tracker Ready. [ESO: %s] [WarmStart: %s] [LocalFrame: ON]", 
-        enable_eso ? "ON" : "OFF", enable_ws ? "ON" : "OFF");
+    RCLCPP_INFO(this->get_logger(), "NMPC Tracker Ready (SFC + Virtual Walls). [ESO: %s]", enable_eso ? "ON" : "OFF");
 }
 
 NmpcTrackerNode::~NmpcTrackerNode() {
@@ -124,29 +126,24 @@ void NmpcTrackerNode::solve_cycle() {
     if (!odom_ok_ || !path_ok_ || full_path_.poses.empty()) return;
 
     // 获取当前状态
-    double gx = cur_x_[0]; 
-    double gy = cur_x_[1]; 
-    double gyaw = cur_x_[2];
-    double gv = cur_x_[3]; 
-    double gw = cur_x_[4];
+    double gx = cur_x_[0]; double gy = cur_x_[1]; double gyaw = cur_x_[2];
+    double gv = cur_x_[3]; double gw = cur_x_[4];
 
     // 获取配置参数
     bool enable_eso = this->get_parameter("eso.enable").as_bool();
     bool enable_warm_start = this->get_parameter("nmpc_config.enable_warm_start").as_bool();
     double target_ref_vel = this->get_parameter("nmpc_config.ref_velocity").as_double();
-    
     double base_margin = this->get_parameter("obstacle_avoidance.base_margin").as_double();
     double search_margin = base_margin * 1.2; 
-    
     double road_half_width = this->get_parameter("track.road_half_width").as_double();
     double safe_ratio = this->get_parameter("safety.max_cte_ratio").as_double();
     double recovery_vel = this->get_parameter("safety.recovery_velocity").as_double();
-    
     double fov_deg = this->get_parameter("perception.fov_half_angle_deg").as_double();
     double fov_rad = fov_deg * M_PI / 180.0;
+    bool use_virtual_walls = this->get_parameter("track.use_virtual_walls").as_bool();
 
     // =========================================================
-    // 1. ESO 观测更新 (Phase 1: Observation)
+    // 1. ESO 观测更新
     // =========================================================
     if (enable_eso) {
         if (std::abs(gv) < 0.02 && std::abs(last_cmd_acc_) < 0.01) linear_eso_->reset();
@@ -155,18 +152,17 @@ void NmpcTrackerNode::solve_cycle() {
         if (std::abs(gw) < 0.02 && std::abs(last_cmd_w_acc_) < 0.01) angular_eso_->reset();
         else angular_eso_->update(last_cmd_w_acc_, gw);
     } else {
-        linear_eso_->reset(); 
-        angular_eso_->reset();
+        linear_eso_->reset(); angular_eso_->reset();
     }
     double dist_acc_lin = linear_eso_->get_disturbance(); 
     double dist_acc_ang = angular_eso_->get_disturbance();
 
     // =========================================================
-    // 2. 全局路径规划 & 安全检查 (Phase 2: Global Planning)
+    // 2. 全局路径规划 & 安全检查
     // =========================================================
     int closest_idx = get_closest_path_index(gx, gy);
     
-    // 安全检查：横向偏离 (CTE)
+    // CTE 检查
     double path_x = full_path_.poses[closest_idx].pose.position.x;
     double path_y = full_path_.poses[closest_idx].pose.position.y;
     double current_cte = std::hypot(gx - path_x, gy - path_y);
@@ -177,13 +173,11 @@ void NmpcTrackerNode::solve_cycle() {
         is_emergency = true;
         target_ref_vel = recovery_vel; 
         RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 1000, 
-            "!!! LARGE CTE DETECTED (%.2fm > %.2fm) !!! Emergency Slowdown -> %.1f m/s", 
-            current_cte, cte_limit, recovery_vel);
+            "!!! LARGE CTE DETECTED (%.2fm) !!! Emergency Slowdown", current_cte);
     }
 
-    // 2.1 寻找初始前瞻目标点
+    // 寻找前瞻目标点
     double lookahead_dist = std::max(5.0, target_ref_vel * N_HORIZON * DT * 1.2); 
-    
     int target_idx = closest_idx;
     double dist_acc = 0;
     while(target_idx < (int)full_path_.poses.size() - 1 && dist_acc < lookahead_dist) {
@@ -197,36 +191,25 @@ void NmpcTrackerNode::solve_cycle() {
     // 获取障碍物
     std::vector<Point> all_obs_pts = get_all_obstacle_points(); 
 
-    // =========================================================
-    // 2.2 目标点碰撞检测与前向拓展 (Forward Extension)
-    // =========================================================
-    int original_target = target_idx;
+    // 前向拓展与碰撞检查
     int max_search_idx = std::min((int)full_path_.poses.size() - 1, target_idx + 300);
-    
     double check_margin_sq = search_margin * search_margin; 
 
     while(target_idx < max_search_idx) {
         double tx = full_path_.poses[target_idx].pose.position.x;
         double ty = full_path_.poses[target_idx].pose.position.y;
-        
         bool collision = false;
         for(const auto& op : all_obs_pts) {
-            double dx = tx - op.x;
-            double dy = ty - op.y;
-            if(dx*dx + dy*dy < check_margin_sq) {
-                collision = true;
-                break;
-            }
+            double dx = tx - op.x; double dy = ty - op.y;
+            if(dx*dx + dy*dy < check_margin_sq) { collision = true; break; }
         }
-        if(collision) target_idx++;
-        else break;
+        if(collision) target_idx++; else break;
     }
-    
     double goal_x = full_path_.poses[target_idx].pose.position.x;
     double goal_y = full_path_.poses[target_idx].pose.position.y;
 
     // =========================================================
-    // 2.3 A* 引导路径规划
+    // 3. A* 引导路径规划
     // =========================================================
     auto start_astar = std::chrono::high_resolution_clock::now();
     std::vector<Point> guide_path;     
@@ -234,16 +217,15 @@ void NmpcTrackerNode::solve_cycle() {
     bool astar_success = false;
     bool reused_old = false; 
 
-    // 提取一段全局路径参考
+    // 提取全局参考段
     std::vector<Point> ref_path_segment;
     int ref_scan_end = std::min((int)full_path_.poses.size(), closest_idx + 400); 
-    ref_path_segment.reserve(ref_scan_end - closest_idx);
     int ref_scan_start = std::max(0, closest_idx - 20); 
     for(int i = ref_scan_start; i < ref_scan_end; ++i) {
         ref_path_segment.push_back({full_path_.poses[i].pose.position.x, full_path_.poses[i].pose.position.y});
     }
 
-    // 尝试复用旧路径 (使用 search_margin)
+    // 复用旧路径逻辑
     if (!last_guide_path_.empty()) {
         std::vector<Point> candidate = prune_path_by_distance(last_guide_path_, gx, gy, lookahead_dist);
         if (candidate.size() > 5 && !check_path_collision(candidate, search_margin)) {
@@ -278,29 +260,80 @@ void NmpcTrackerNode::solve_cycle() {
     auto end_astar = std::chrono::high_resolution_clock::now();
     double t_astar = std::chrono::duration<double, std::milli>(end_astar - start_astar).count();
 
+    // =================================================================================
+    // [新增模块] SFC 生成 (包含虚拟墙)
+    // =================================================================================
+    std::vector<SFC_Constraint> sfc_corridor;
+    if (astar_success) {
+        // 1. 转换参考路径
+        std::vector<Eigen::Vector2d> eigen_path;
+        eigen_path.reserve(guide_path.size());
+        for(const auto& p : guide_path) eigen_path.emplace_back(p.x, p.y);
+
+        // 2. 准备障碍物点云 (包含感知点 + 虚拟墙)
+        std::vector<Eigen::Vector2d> eigen_obs;
+        eigen_obs.reserve(all_obs_pts.size() + 200); // 预留空间
+
+        // 2.1 添加感知到的真实障碍物
+        for(const auto& p : all_obs_pts) eigen_obs.emplace_back(p.x, p.y);
+
+        // 2.2 [关键修改] 添加虚拟墙作为障碍物
+        if (use_virtual_walls) {
+            // 沿 global path 采样生成虚拟墙点
+            // 只生成当前视野/规划范围内相关的部分
+            int vw_scan_start = std::max(0, closest_idx - 10);
+            int vw_scan_end = std::min((int)full_path_.poses.size() - 1, closest_idx + N_HORIZON + 50);
+            
+            // 步长取 2 减少计算量，只要点够密挡住 box 扩张即可
+            for(int k = vw_scan_start; k < vw_scan_end; k += 2) {
+                double wx = full_path_.poses[k].pose.position.x;
+                double wy = full_path_.poses[k].pose.position.y;
+                
+                // 计算该点的切线 Yaw
+                double wyaw = 0.0;
+                if (k < (int)full_path_.poses.size() - 1) {
+                    double ddx = full_path_.poses[k+1].pose.position.x - wx;
+                    double ddy = full_path_.poses[k+1].pose.position.y - wy;
+                    wyaw = std::atan2(ddy, ddx);
+                } else if (k > 0) {
+                     double ddx = wx - full_path_.poses[k-1].pose.position.x;
+                     double ddy = wy - full_path_.poses[k-1].pose.position.y;
+                     wyaw = std::atan2(ddy, ddx);
+                }
+                
+                double wnx = -std::sin(wyaw);
+                double wny = std::cos(wyaw);
+                
+                // 左墙点
+                eigen_obs.emplace_back(wx + wnx * road_half_width, wy + wny * road_half_width);
+                // 右墙点
+                eigen_obs.emplace_back(wx - wnx * road_half_width, wy - wny * road_half_width);
+            }
+        }
+
+        // 3. 生成走廊
+        sfc_corridor = sfc_gen_->generate_corridor(eigen_path, eigen_obs);
+    }
+    // =================================================================================
+
     // =========================================================
-    // 2.5 动态步长计算 & 曲率可视化 (Dynamic Step & Visualization)
+    // 4. 动态步长与曲率计算 (可视化用)
     // =========================================================
-    
-    // [Config] 获取曲率相关参数
     double curvature_threshold = this->get_parameter("nmpc_config.curvature_threshold").as_double();
     double global_curve_weight = this->get_parameter("nmpc_config.global_curvature_weight").as_double();
     double local_curve_weight = this->get_parameter("nmpc_config.local_curvature_weight").as_double();
     double smoothing_alpha = this->get_parameter("nmpc_config.local_curvature_smoothing").as_double();
     
     double raw_path_res = 0.1; 
-    
     double stride_dist = 0.5; 
     int stride_step = std::max(1, (int)(stride_dist / raw_path_res)); 
 
-    // [动态检查距离]
     double predicted_path_len = target_ref_vel * N_HORIZON * DT; 
     double check_dist = std::max(15.0, predicted_path_len * 1.2);
-
     int max_check_steps = static_cast<int>(check_dist / raw_path_res);
     int end_scan_idx = std::min((int)full_path_.poses.size() - 1 - stride_step, closest_idx + max_check_steps);
     
-    // --- 1. 全局路径曲率 (Global) ---
+    // 全局曲率
     double global_curve_sum = 0.0;
     std::vector<geometry_msgs::msg::Point> curve_viz_pts;
     std::vector<std_msgs::msg::ColorRGBA> curve_viz_cols;
@@ -312,9 +345,7 @@ void NmpcTrackerNode::solve_cycle() {
             double yaw1 = std::atan2(dy1, dx1);
 
             geometry_msgs::msg::Point pt;
-            pt.x = full_path_.poses[k].pose.position.x;
-            pt.y = full_path_.poses[k].pose.position.y;
-            pt.z = 0.2; 
+            pt.x = full_path_.poses[k].pose.position.x; pt.y = full_path_.poses[k].pose.position.y; pt.z = 0.2; 
             curve_viz_pts.push_back(pt);
 
             double diff = 0.0;
@@ -322,11 +353,7 @@ void NmpcTrackerNode::solve_cycle() {
                 double dx0 = full_path_.poses[k].pose.position.x - full_path_.poses[k - stride_step].pose.position.x;
                 double dy0 = full_path_.poses[k].pose.position.y - full_path_.poses[k - stride_step].pose.position.y;
                 double yaw0 = std::atan2(dy0, dx0);
-                
-                diff = yaw1 - yaw0;
-                while(diff > M_PI) diff -= 2*M_PI; 
-                while(diff < -M_PI) diff += 2*M_PI;
-                diff = std::abs(diff);
+                diff = std::abs(unwrap_yaw(yaw1, yaw0) - yaw0);
                 global_curve_sum += diff;
             }
 
@@ -336,47 +363,31 @@ void NmpcTrackerNode::solve_cycle() {
             curve_viz_cols.push_back(col);
         }
     }
-    // [Weight] 全局曲率加权
     global_curve_sum *= global_curve_weight;
 
-    // --- 2. 局部路径曲率 (A*) ---
+    // 局部曲率
     double raw_local_curve_sum = 0.0;
     if (guide_path.size() > 2) {
         int check_limit_local = std::min((int)guide_path.size() - 1, 60); 
         for (int k = 0; k < check_limit_local - 1; k++) {
-            double dx1 = guide_path[k+1].x - guide_path[k].x;
-            double dy1 = guide_path[k+1].y - guide_path[k].y;
+            double dx1 = guide_path[k+1].x - guide_path[k].x; double dy1 = guide_path[k+1].y - guide_path[k].y;
             double yaw1 = std::atan2(dy1, dx1);
-            
             if (k > 0) {
-                double dx0 = guide_path[k].x - guide_path[k-1].x;
-                double dy0 = guide_path[k].y - guide_path[k-1].y;
+                double dx0 = guide_path[k].x - guide_path[k-1].x; double dy0 = guide_path[k].y - guide_path[k-1].y;
                 double yaw0 = std::atan2(dy0, dx0);
-                
-                double diff = yaw1 - yaw0;
-                while(diff > M_PI) diff -= 2*M_PI; 
-                while(diff < -M_PI) diff += 2*M_PI;
-                raw_local_curve_sum += std::abs(diff);
+                raw_local_curve_sum += std::abs(unwrap_yaw(yaw1, yaw0) - yaw0);
             }
         }
     }
-    
-    // [Smooth] 对原始局部曲率应用低通滤波
-    // 如果 A* 路径失效(长度不足)，raw 为 0，滤波会让它缓慢归零，符合物理直觉
     last_filtered_local_curve_ = smoothing_alpha * raw_local_curve_sum + (1.0 - smoothing_alpha) * last_filtered_local_curve_;
-    
-    // [Weight] 使用滤波后的值进行加权
     double weighted_local_curve = last_filtered_local_curve_ * local_curve_weight;
 
-    // --- 3. 融合曲率 (Take Max) ---
-    // 最终曲率 = max( 加权全局曲率, 加权平滑后的局部曲率 )
     double total_curve = std::max(global_curve_sum, weighted_local_curve);
-
     double curve_ratio = std::clamp(total_curve / curvature_threshold, 0.0, 1.0);
     double dynamic_step_dist = 0.2 - curve_ratio * (0.2 - 0.1); 
 
     // =========================================================
-    // 3. 构建 NMPC 问题 (Phase 3: Local Frame Setup)
+    // 5. 构建 NMPC 问题 (保持原有 Hyperplane 逻辑)
     // =========================================================
     double cos_theta = std::cos(gyaw);
     double sin_theta = std::sin(gyaw);
@@ -403,67 +414,56 @@ void NmpcTrackerNode::solve_cycle() {
     }
 
     double last_yaw_ref_global = gyaw; 
-    bool use_virtual_walls = this->get_parameter("track.use_virtual_walls").as_bool();
     int max_obs = this->get_parameter("obstacle_avoidance.max_obstacles").as_int();
 
     std::vector<NmpcVisualizer::VizObs> all_constraint_viz;
     std::vector<std::pair<double, double>> target_path_viz; 
-
     double current_ref_progress = 0.0;
 
     for (int i = 0; i <= N_HORIZON; i++) {
         int idx_offset = static_cast<int>(current_ref_progress / raw_path_res);
         int global_idx = std::min(closest_idx + idx_offset, (int)full_path_.poses.size() - 1);
-        
         current_ref_progress += dynamic_step_dist;
 
         double ref_tx_g = full_path_.poses[global_idx].pose.position.x;
         double ref_ty_g = full_path_.poses[global_idx].pose.position.y;
-        
         auto ref_local = transform_to_local(ref_tx_g, ref_ty_g);
         
         double global_next_yaw = 0.0;
         int global_next_tangent_idx = std::min(global_idx + 1, (int)full_path_.poses.size() - 1);
-        
         if (global_next_tangent_idx > global_idx) {
             double dx = full_path_.poses[global_next_tangent_idx].pose.position.x - ref_tx_g;
             double dy = full_path_.poses[global_next_tangent_idx].pose.position.y - ref_ty_g;
             global_next_yaw = std::atan2(dy, dx);
         } else { global_next_yaw = last_yaw_ref_global; }
 
-        double diff = global_next_yaw - last_yaw_ref_global;
-        while(diff > M_PI) diff -= 2*M_PI; while(diff < -M_PI) diff += 2*M_PI;
-        double smooth_yaw_global = last_yaw_ref_global + diff;
+        double smooth_yaw_global = unwrap_yaw(global_next_yaw, last_yaw_ref_global);
         last_yaw_ref_global = smooth_yaw_global;
         double yaw_ref_local = smooth_yaw_global - gyaw; 
 
         double yref[7] = {ref_local.first, ref_local.second, target_ref_vel, yaw_ref_local, 0, 0, 0};
         ocp_nlp_cost_model_set(conf, dims, in, i, "yref", yref);
-        
         target_path_viz.push_back({ref_tx_g, ref_ty_g}); 
 
+        // 障碍物超平面 (Hyperplanes)
         int guide_idx = std::min(i, (int)guide_path.size() - 1);
         Point guide_pt_g = guide_path[guide_idx];
         auto guide_pt_l = transform_to_local(guide_pt_g.x, guide_pt_g.y);
         
         std::vector<ObstacleParam> step_obs;
-
-        // 虚拟墙
+        
+        // 此处的 Virtual Walls 是为 Hyperplane 方法用的局部墙
         if (use_virtual_walls) {
-            double cy = std::cos(yaw_ref_local); 
-            double sy = std::sin(yaw_ref_local);
-            
+            double cy = std::cos(yaw_ref_local); double sy = std::sin(yaw_ref_local);
             ObstacleParam left_wall, right_wall;
             left_wall.ox = ref_local.first - sy * road_half_width; 
             left_wall.oy = ref_local.second + cy * road_half_width;
-            left_wall.r  = base_margin; 
-            left_wall.nx = sy; left_wall.ny = -cy; 
+            left_wall.r  = base_margin; left_wall.nx = sy; left_wall.ny = -cy; 
             step_obs.push_back(left_wall);
             
             right_wall.ox = ref_local.first + sy * road_half_width; 
             right_wall.oy = ref_local.second - cy * road_half_width;
-            right_wall.r  = base_margin; 
-            right_wall.nx = -sy; right_wall.ny = cy;
+            right_wall.r  = base_margin; right_wall.nx = -sy; right_wall.ny = cy;
             step_obs.push_back(right_wall);
 
             if (i % 2 == 0) {
@@ -482,11 +482,8 @@ void NmpcTrackerNode::solve_cycle() {
             }
         }
 
-        // 障碍物拟合
         if (!local_obs_pts.empty()) {
             ObstacleParam p = HyperplaneUtil::fit_obstacle(local_obs_pts, guide_pt_l.first, guide_pt_l.second, base_margin);
-            
-            // 过滤：距离 & FOV & 后方
             bool is_close = std::hypot(p.ox - guide_pt_l.first, p.oy - guide_pt_l.second) < 6.0;
             double obs_angle = std::atan2(p.oy, p.ox);
             bool in_fov = std::abs(obs_angle) <= fov_rad;
@@ -513,7 +510,7 @@ void NmpcTrackerNode::solve_cycle() {
     }
 
     // =========================================================
-    // 4. 热启动处理
+    // 6. 热启动 & 求解
     // =========================================================
     if (enable_warm_start) {
         for (int i = 0; i < N_HORIZON; i++) {
@@ -537,10 +534,6 @@ void NmpcTrackerNode::solve_cycle() {
         }
     }
 
-    // =========================================================
-    // 5. 求解
-    // =========================================================
-    auto start_solve = std::chrono::high_resolution_clock::now();
     int status = racing_control_hyperplane_acados_solve(capsule_);
     auto end_solve = std::chrono::high_resolution_clock::now();
     double t_total = std::chrono::duration<double, std::milli>(end_solve - start_total).count();
@@ -549,7 +542,7 @@ void NmpcTrackerNode::solve_cycle() {
     pub_solve_time_->publish(time_msg);
 
     // =========================================================
-    // 6. 输出与可视化
+    // 7. 输出与可视化 (包含 SFC)
     // =========================================================
     std::string astar_str = astar_success ? (reused_old ? "Reuse" : "Plan") : "Fail";
     char log_buf[256];
@@ -558,10 +551,8 @@ void NmpcTrackerNode::solve_cycle() {
         snprintf(log_buf, sizeof(log_buf), 
             "TIME[Tot:%.1f] A*:%s ESO[Lin:%.2f] Curve[G:%.1f|L:%.1f] Step[%.3f] V:%.2f %s",
             t_total, astar_str.c_str(), dist_acc_lin, 
-            global_curve_sum, weighted_local_curve, // 打印的是加权后的值
-            dynamic_step_dist, 
-            gv,
-            is_emergency ? "[RECOVERY MODE]" : "");
+            global_curve_sum, weighted_local_curve, dynamic_step_dist, gv,
+            is_emergency ? "[RECOVERY]" : "");
             
         if (is_emergency) RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 2000, "%s", log_buf);
         else RCLCPP_INFO(this->get_logger(), "%s", log_buf);
@@ -569,7 +560,6 @@ void NmpcTrackerNode::solve_cycle() {
         double u0[2]; 
         ocp_nlp_out_get(conf, dims, out, 0, "u", u0);
         
-        // [修复] ESO 反馈修正
         double b0_lin = this->get_parameter("eso.b0_linear").as_double();
         double b0_ang = this->get_parameter("eso.b0_angular").as_double();
         double u_acc_actual = u0[0] - dist_acc_lin / b0_lin;
@@ -591,8 +581,17 @@ void NmpcTrackerNode::solve_cycle() {
         std::vector<std::pair<double, double>> astar_guide_viz; 
         for (const auto& p : guide_path) astar_guide_viz.push_back({p.x, p.y});
         
-        // 传入曲率可视化参数
-        render_visualization(global_pred_traj, all_constraint_viz, target_path_viz, astar_guide_viz, goal_x, goal_y, curve_viz_pts, curve_viz_cols);
+        // 传递 sfc_corridor 给可视化
+        render_visualization(
+            global_pred_traj, 
+            all_constraint_viz, 
+            target_path_viz, 
+            astar_guide_viz, 
+            goal_x, goal_y, 
+            curve_viz_pts, 
+            curve_viz_cols, 
+            sfc_corridor // [新增]
+        );
 
     } else {
         snprintf(log_buf, sizeof(log_buf), "QP FAIL: %d", status);
@@ -601,7 +600,10 @@ void NmpcTrackerNode::solve_cycle() {
     }
 }
 
-// 指令发布
+// =========================================================
+// 辅助函数
+// =========================================================
+
 void NmpcTrackerNode::publish_command(ocp_nlp_config* conf, ocp_nlp_dims* dims, ocp_nlp_out* out, 
                                       double dist_lin, double dist_ang) 
 {
@@ -615,7 +617,6 @@ void NmpcTrackerNode::publish_command(ocp_nlp_config* conf, ocp_nlp_dims* dims, 
     double b0_lin = this->get_parameter("eso.b0_linear").as_double();
     double b0_ang = this->get_parameter("eso.b0_angular").as_double();
 
-    // u_actual = u_ideal - (disturbance / b0)
     double u_acc_comp = u0[0] - dist_lin / b0_lin;
     double u_ang_comp = u0[1] - dist_ang / b0_ang;
 
@@ -716,15 +717,19 @@ void NmpcTrackerNode::render_visualization(
     const std::vector<std::pair<double, double>>& astar_guide_viz,
     double goal_x, double goal_y,
     const std::vector<geometry_msgs::msg::Point>& curve_pts,
-    const std::vector<std_msgs::msg::ColorRGBA>& curve_cols) 
+    const std::vector<std_msgs::msg::ColorRGBA>& curve_cols,
+    const std::vector<SFC_Constraint>& sfc_corridor) // [新增]
 {
     double fov_deg = this->get_parameter("perception.fov_half_angle_deg").as_double();
     std::vector<double> robot_state = {cur_x_[0], cur_x_[1], cur_x_[2]};
     
+    // 传递 sfc_corridor 给 Visualizer
     auto markers = visualizer_->create_viz_packet(
         this->get_clock()->now(), pred_traj, constraint_viz, target_path_viz, false, 
         robot_state, fov_deg * M_PI / 180.0,
-        curve_pts, curve_cols);
+        curve_pts, curve_cols,
+        sfc_corridor // [新增]
+    );
 
     visualization_msgs::msg::Marker goal_mk;
     goal_mk.header.frame_id = "map"; 

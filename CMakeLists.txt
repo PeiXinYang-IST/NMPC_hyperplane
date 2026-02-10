@@ -1,6 +1,16 @@
 cmake_minimum_required(VERSION 3.8)
 project(nmpc_tracker)
 
+find_program(CCACHE_PROGRAM ccache)
+if(CCACHE_PROGRAM)
+    set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
+    set(CMAKE_C_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
+endif()
+find_program(MOLD_LINKER mold)
+if(MOLD_LINKER)
+    add_link_options("-fuse-ld=mold")
+endif()
+
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 

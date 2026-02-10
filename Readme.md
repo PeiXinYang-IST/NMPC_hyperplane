@@ -85,6 +85,8 @@ sudo apt update
 sudo apt install ros-humble-rclcpp ros-humble-nav-msgs ros-humble-sensor-msgs \
   ros-humble-geometry-msgs ros-humble-visualization-msgs ros-humble-tf2 \
   ros-humble-tf2-geometry-msgs ros-humble-tf2-ros ros-humble-launch
+sudo apt install ccache
+sudo apt install mold
 ```
 
 ### 2. Install Acados

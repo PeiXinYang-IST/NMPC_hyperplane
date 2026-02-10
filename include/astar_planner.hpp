@@ -15,10 +15,6 @@ struct GridNode {
     double g, f;
     GridNode* parent = nullptr;
     
-    // [优化] 核心：使用 int 标记代替 bool closed/open
-    // 如果 node.visit_id != planner.current_id，视为未访问
-    // 如果 node.visit_id == planner.current_id，视为已访问/Open
-    // 还需要一个 closed 标记，为了省内存，我们可以用位掩码或单独的 closed_id
     int visited_id = 0; 
     bool is_closed = false;
 
@@ -233,15 +229,6 @@ private:
         return (dx + dy) + (1.41421 - 2.0) * std::min(dx, dy); 
     }
 
-    // 辅助函数：根据局部坐标获取 node_pool_ 中的指针
-    // 注意：这里的 w 是当前搜索的宽度，不是 max_width_
-    // 我们需要把局部 (x, y) 映射到 node_pool_ 的 (x, y) 吗？
-    // 为了简单，我们直接复用 node_pool_ 的前 width * height 个格子作为 mapping?
-    // 不，最快的方法是：直接用 GridNode 的成员变量存储它在局部图中的位置，
-    // 但是 node_pool_ 本身必须足够大以容纳 map。
-    // 简单起见：node_pool_ 也是一个大 2D 阵列。
-    // 我们将局部坐标 (x,y) 加上 offset 变成全局索引？不，局部坐标直接对应 pool 索引即可。
-    // 只要保证 run_astar 传入的 w, h 不超过 max_width, max_height
     inline GridNode* get_node(int x, int y) {
         return &node_pool_[y * max_width_ + x];
     }

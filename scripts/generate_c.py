@@ -87,10 +87,10 @@ def setup_ocp(N_horizon=60, Tf=3.0):
     ocp.model.cost_y_expr_e = ca.vertcat(model.x[0], model.x[1], vx, omega)
     
     # 权重矩阵 W: 对应 cost_y_expr 中每一项的惩罚力度
-    W = np.diag([50.0, 50.0, 1.0, 1.0, 1.0, 1.0, 1.0])
+    W = np.diag([10.0, 10.0, 1.0, 1.0, 1.0, 1.0, 1.0])
     ocp.cost.W = W
     ocp.cost.W_0 = W
-    ocp.cost.W_e = np.diag([50.0, 50.0, 0.1, 0.5]) # 终端权重
+    ocp.cost.W_e = np.diag([10.0, 10.0, 0.1, 0.5]) # 终端权重
     
     # 期望参考值 (Reference): 实际运行时会从外部（如全局路径）更新
     ocp.cost.yref = np.zeros(7)
@@ -103,8 +103,8 @@ def setup_ocp(N_horizon=60, Tf=3.0):
     ocp.constraints.ubx = np.array([7.0, 2.5])  # 速度上限 7, 最大角速度 2.5
     
     ocp.constraints.idxbu = np.array([0, 1])   # 针对 ax, alpha 设置控制约束
-    ocp.constraints.lbu = np.array([-1.5, -0.75]) # 最大刹车 -1.5, 最大转角速率 -0.75
-    ocp.constraints.ubu = np.array([1.5, 0.75])  # 最大加速 1.5, 最大转角速率 0.75
+    ocp.constraints.lbu = np.array([-1.5, -1.0]) # 最大刹车 -1.5, 最大转角速率 -0.75
+    ocp.constraints.ubu = np.array([1.5, 1.0])  # 最大加速 1.5, 最大转角速率 0.75
     
     ocp.constraints.x0 = np.zeros(nx) # 初始状态占位
 

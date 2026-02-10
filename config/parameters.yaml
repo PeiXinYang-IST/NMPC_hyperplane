@@ -3,7 +3,7 @@
     nmpc_config:
       ref_velocity: 5.0             # 期望巡航速度 (m/s)
       control_loop_ms: 50           # 控制循环周期 (毫秒)
-      enable_warm_start: False
+      enable_warm_start: True
       curvature_threshold: 2000.0
       global_curvature_weight: 1.0
       local_curvature_weight: 1.0
@@ -24,9 +24,9 @@
 
     obstacle_avoidance:
       max_obstacles: 5              # 求解器支持的最大障碍物数量
-      base_margin: 1.0              # 基础安全距离/机器人半径 (米)
+      base_margin: 1.5              # 基础安全距离/机器人半径 (米)
       smoothing_alpha: 0.5          # 法向量一阶低通滤波系数 (0-1)
-      astar_reference_cost_weight: 0.2
+      astar_reference_cost_weight: 0.5
       history_bias_weight: 0.2
 
     robot_limits:
@@ -42,6 +42,6 @@
       b0_linear: 1.0
       b0_angular: 1.0
     sfc:
-      robot_radius: 1.0
+      robot_radius: 1.5
       search_radius: 5.0
       longitudinal_length: 4.0

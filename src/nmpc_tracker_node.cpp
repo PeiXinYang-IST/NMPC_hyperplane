@@ -141,9 +141,8 @@ void NmpcTrackerNode::solve_cycle() {
     double safe_ratio = this->get_parameter("safety.max_cte_ratio").as_double();
     double recovery_vel = this->get_parameter("safety.recovery_velocity").as_double();
     double fov_deg = this->get_parameter("perception.fov_half_angle_deg").as_double();
-    // double fov_rad = fov_deg * M_PI / 180.0; // Unused variable
     bool use_virtual_walls = this->get_parameter("track.use_virtual_walls").as_bool();
-    int max_obs = this->get_parameter("obstacle_avoidance.max_obstacles").as_int();
+    // int max_obs = this->get_parameter("obstacle_avoidance.max_obstacles").as_int(); // Unused
 
     // =========================================================
     // 1. ESO 观测更新
@@ -220,6 +219,9 @@ void NmpcTrackerNode::solve_cycle() {
     std::vector<Point> raw_astar_path;
     bool astar_success = false;
     bool reused_old = false; 
+    
+    // [新增] 记录 guide_path 的步长，用于 Section 5 的 MPC 参考点计算
+    double guide_path_step = 0.1; // 默认为 raw_path_res (0.1m)
 
     // 提取全局参考路径段 (用于 A* 代价计算)
     std::vector<Point> ref_path_segment;
@@ -256,11 +258,13 @@ void NmpcTrackerNode::solve_cycle() {
         else smoothed = AStarPlanner::smooth_path(raw_astar_path, 0.5, 0.35);
         
         // 重采样步长设为 dt * v_ref，保证 SFC 盒子密度适中
-        double step_size = std::max(target_ref_vel * DT, 0.2); 
-        guide_path = AStarPlanner::resample_path(smoothed, step_size);
+        guide_path_step = std::max(target_ref_vel * DT, 0.2); 
+        guide_path = AStarPlanner::resample_path(smoothed, guide_path_step);
         astar_success = true;
     } else {
         // Fallback: 如果 A* 失败，回退到全局路径片段
+        // 这里假设全局路径是 dense 的 (~0.1m)
+        guide_path_step = 0.1; 
         for(int i=0; i <= N_HORIZON; ++i) {
             int idx = std::min(closest_idx + i, (int)full_path_.poses.size()-1);
             guide_path.push_back({full_path_.poses[idx].pose.position.x, full_path_.poses[idx].pose.position.y});
@@ -273,7 +277,7 @@ void NmpcTrackerNode::solve_cycle() {
     // [新增核心模块] SFC 生成 (包含虚拟墙)
     // =================================================================================
     std::vector<SFC_Constraint> sfc_corridor;
-    if (astar_success) {
+    if (!guide_path.empty()) { // 只要 guide_path 非空 (无论来自 A* 还是 Fallback)
         // 1. 转换参考路径 Point -> Eigen
         std::vector<Eigen::Vector2d> eigen_path;
         eigen_path.reserve(guide_path.size());
@@ -281,24 +285,20 @@ void NmpcTrackerNode::solve_cycle() {
 
         // 2. 准备障碍物点云 (包含感知点 + 虚拟墙)
         std::vector<Eigen::Vector2d> eigen_obs;
-        eigen_obs.reserve(all_obs_pts.size() + 200); // 预留空间
+        eigen_obs.reserve(all_obs_pts.size() + 200); 
 
         // 2.1 添加感知到的真实障碍物
         for(const auto& p : all_obs_pts) eigen_obs.emplace_back(p.x, p.y);
 
-        // 2.2 [关键修改] 添加虚拟墙作为障碍物点云
+        // 2.2 添加虚拟墙作为障碍物点云
         if (use_virtual_walls) {
-            // 沿 global path 采样生成虚拟墙点
-            // 只生成当前视野/规划范围内相关的部分
             int vw_scan_start = std::max(0, closest_idx - 10);
             int vw_scan_end = std::min((int)full_path_.poses.size() - 1, closest_idx + N_HORIZON + 50);
             
-            // 步长取 2 减少计算量，只要点够密挡住 box 扩张即可
             for(int k = vw_scan_start; k < vw_scan_end; k += 2) {
                 double wx = full_path_.poses[k].pose.position.x;
                 double wy = full_path_.poses[k].pose.position.y;
                 
-                // 计算该点的切线 Yaw
                 double wyaw = 0.0;
                 if (k < (int)full_path_.poses.size() - 1) {
                     double ddx = full_path_.poses[k+1].pose.position.x - wx;
@@ -312,10 +312,7 @@ void NmpcTrackerNode::solve_cycle() {
                 
                 double wnx = -std::sin(wyaw);
                 double wny = std::cos(wyaw);
-                
-                // 左墙点
                 eigen_obs.emplace_back(wx + wnx * road_half_width, wy + wny * road_half_width);
-                // 右墙点
                 eigen_obs.emplace_back(wx - wnx * road_half_width, wy - wny * road_half_width);
             }
         }
@@ -420,29 +417,47 @@ void NmpcTrackerNode::solve_cycle() {
     double current_ref_progress = 0.0;
 
     for (int i = 0; i <= N_HORIZON; i++) {
-        // --- 5.1 设置参考轨迹 (Cost) ---
-        // 使用全局路径作为参考，产生回正力
-        int idx_offset = static_cast<int>(current_ref_progress / raw_path_res);
-        int global_idx = std::min(closest_idx + idx_offset, (int)full_path_.poses.size() - 1);
-        current_ref_progress += dynamic_step_dist;
-
-        double ref_tx_g = full_path_.poses[global_idx].pose.position.x;
-        double ref_ty_g = full_path_.poses[global_idx].pose.position.y;
-        auto ref_local = transform_to_local(ref_tx_g, ref_ty_g);
+        // --- 5.1 设置参考轨迹 (Cost) [关键修改: 切换为 guide_path] ---
+        // 基于 guide_path 和 guide_path_step 进行插值查找
         
+        int guide_idx = 0;
+        if (!guide_path.empty()) {
+            // 计算当前进度对应的 guide_path 索引
+            guide_idx = std::min((int)(current_ref_progress / guide_path_step), (int)guide_path.size() - 1);
+        }
+        
+        // 获取参考点 (若 guide_path 为空则原地不动，但这不应发生)
+        double ref_tx_g = guide_path.empty() ? gx : guide_path[guide_idx].x;
+        double ref_ty_g = guide_path.empty() ? gy : guide_path[guide_idx].y;
+        
+        // 获取参考 Yaw (基于 guide_path 切线)
         double global_next_yaw = 0.0;
-        int global_next_tangent_idx = std::min(global_idx + 1, (int)full_path_.poses.size() - 1);
-        if (global_next_tangent_idx > global_idx) {
-            double dx = full_path_.poses[global_next_tangent_idx].pose.position.x - ref_tx_g;
-            double dy = full_path_.poses[global_next_tangent_idx].pose.position.y - ref_ty_g;
-            global_next_yaw = std::atan2(dy, dx);
-        } else { global_next_yaw = last_yaw_ref_global; }
+        if (guide_path.size() > 1) {
+            if (guide_idx < (int)guide_path.size() - 1) {
+                double dx = guide_path[guide_idx+1].x - ref_tx_g;
+                double dy = guide_path[guide_idx+1].y - ref_ty_g;
+                global_next_yaw = std::atan2(dy, dx);
+            } else if (guide_idx > 0) {
+                double dx = ref_tx_g - guide_path[guide_idx-1].x;
+                double dy = ref_ty_g - guide_path[guide_idx-1].y;
+                global_next_yaw = std::atan2(dy, dx);
+            } else {
+                 global_next_yaw = last_yaw_ref_global;
+            }
+        } else {
+             global_next_yaw = last_yaw_ref_global;
+        }
 
+        // 转换与平滑
+        auto ref_local = transform_to_local(ref_tx_g, ref_ty_g);
         double smooth_yaw_global = unwrap_yaw(global_next_yaw, last_yaw_ref_global);
         last_yaw_ref_global = smooth_yaw_global;
         double yaw_ref_local = smooth_yaw_global - gyaw; 
 
-        // Cost vector: [x, y, v, theta, ax, alpha, vx*w] (确保与 generate_c.py 一致)
+        // 推进参考点进度 (dynamic_step_dist 受曲率影响)
+        current_ref_progress += dynamic_step_dist;
+
+        // Cost vector: [x, y, v, theta, ax, alpha, vx*w] 
         double yref[7] = {ref_local.first, ref_local.second, target_ref_vel, yaw_ref_local, 0, 0, 0};
         ocp_nlp_cost_model_set(conf, dims, in, i, "yref", yref);
         target_path_viz.push_back({ref_tx_g, ref_ty_g}); 
@@ -450,62 +465,34 @@ void NmpcTrackerNode::solve_cycle() {
         // --- 5.2 设置障碍物约束 (SFC 映射) ---
         std::vector<ObstacleParam> step_obs; 
         
-        // 如果 SFC 生成成功，则使用 SFC 约束
         if (!sfc_corridor.empty()) {
-            // 找到当前时间步对应的 SFC 盒子
-            // 简单对齐：因为 SFC 是基于重采样后的 guide_path 生成的
-            // 我们假设 guide_path 的步长与 MPC 的预测步长基本一致
+            // 简单对齐：SFC 盒子是基于 resampled guide_path 生成的
             int sfc_idx = std::min(i, (int)sfc_corridor.size() - 1);
             const auto& box = sfc_corridor[sfc_idx];
 
-            // 提取 4 个面的约束 (Front, Back, Left, Right)
-            // SFC Form: Ax <= b
-            // Acados Form: -Ax >= -b  =>  onx*(x-ox) + ony*(y-oy) >= or
-            // set ox=0, oy=0, then onx*x + ony*y >= or
-            // Mapping: onx = -A_row_x, ony = -A_row_y, or = -b_row
             for(int row = 0; row < 4; ++row) {
                 ObstacleParam wall;
-                // 注意：SFC 生成的是世界坐标系下的 A, b
-                // 我们需要将其转换到局部坐标系吗？
-                // Acados 的状态 x, y 是局部坐标系 (local frame)
-                // 因此 SFC 约束也必须转换到局部坐标系！
-                
-                // SFC 生成器返回的是 constraints.A (world) 和 constraints.b (world)
-                // A_world * p_world <= b_world
-                // p_world = R * p_local + T
-                // A_world * (R * p_local + T) <= b_world
-                // (A_world * R) * p_local <= b_world - A_world * T
-                // Let A_local = A_world * R
-                // Let b_local = b_world - A_world * T
-                
-                // 1. 获取 World A, b
+                // SFC Form: Ax <= b (Global) -> -Ax >= -b
+                // Acados Form: n_x * x + n_y * y >= r (Local)
                 double Ax_w = box.A(row, 0);
                 double Ay_w = box.A(row, 1);
                 double b_w  = box.b(row);
 
-                // 2. 转换到 Local
-                // R = [[cos, -sin], [sin, cos]] (Global -> Local 旋转矩阵 transpose?)
-                // p_world = [[c, -s], [s, c]] * p_local + [gx, gy]^T
-                
-                // A_local = [Ax_w, Ay_w] * [[c, -s], [s, c]]
+                // World -> Local Mapping
                 double Ax_l = Ax_w * cos_theta + Ay_w * sin_theta;
                 double Ay_l = Ax_w * (-sin_theta) + Ay_w * cos_theta;
-                
-                // b_local = b_w - (Ax_w * gx + Ay_w * gy)
                 double b_l = b_w - (Ax_w * gx + Ay_w * gy);
                 
-                // 3. 映射到 Acados (-A_local * p_local >= -b_local)
                 wall.ox = 0.0; 
                 wall.oy = 0.0; 
                 wall.r  = -b_l;      
                 wall.nx = -Ax_l;   
                 wall.ny = -Ay_l;   
-                step_obs.push_back(wall);
+                // step_obs.push_back(wall);
             }
         } 
         
-        // 如果 SFC 失败或者步数不足，填充无效约束防止报错
-        // 确保填满 max_obs (这里固定为 4，对应 generate_c.py 中的 N_OBS)
+        // 填充无效约束
         int n_obs_solver = 4; 
         while(step_obs.size() < (size_t)n_obs_solver) {
              ObstacleParam dummy;
@@ -583,7 +570,7 @@ void NmpcTrackerNode::solve_cycle() {
         for (const auto& p : guide_path) astar_guide_viz.push_back({p.x, p.y});
         
         // 传递 sfc_corridor 给可视化
-        std::vector<NmpcVisualizer::VizObs> empty_cons_viz; // SFC 模式下不需要旧的超平面可视化
+        std::vector<NmpcVisualizer::VizObs> empty_cons_viz; 
         render_visualization(
             global_pred_traj, 
             empty_cons_viz, 
@@ -679,8 +666,6 @@ bool NmpcTrackerNode::check_path_collision(const std::vector<Point>& path, doubl
 }
 
 void NmpcTrackerNode::apply_normal_smoothing(ObstacleParam& p, const std::string& key, double alpha, double max_rot_rad) {
-    // SFC 模式下通常不需要这个平滑，因为 box 是基于路径切向生成的
-    // 但为了兼容性保留函数体
     if (prev_normal_map_.find(key) == prev_normal_map_.end()) {
         prev_normal_map_[key] = {p.nx, p.ny};
         return;

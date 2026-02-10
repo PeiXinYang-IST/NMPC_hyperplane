@@ -1,6 +1,52 @@
 # NMPC Tracker
 
-A ROS2 Nonlinear Model Predictive Control (NMPC) tracker with hyperplane-based obstacle avoidance, featuring Acados optimization, DBSCAN clustering, and A* planning.
+A ROS2 Nonlinear Model Predictive Control (NMPC) tracker featuring **two obstacle avoidance interfaces**: hyperplane-based and SFC-based (Space-Filling Curve corridor), with **A* planning and backend optimization**.
+
+## Two Obstacle Avoidance Interfaces
+
+This project provides two distinct interfaces for safety-critical trajectory tracking:
+
+### 1. Hyperplane Interface (基于超平面的接口)
+
+**Use Case**: Simple circular obstacle avoidance with normal vector constraints.
+
+- Obstacle constraint: `nx * (x - ox) + ny * (y - oy) >= r`
+- Computes the closest obstacle and generates normal vector constraints
+- Integrates with Acados through auto-generated C code
+
+**Key Files**:
+- `include/hyperplane_util.hpp` - Hyperplane utility functions
+- `scripts/generate_c.py` - Acados C code generation
+- `scripts/c_generated_code/` - Generated constraint and model code
+
+### 2. SFC Interface (基于SFC的接口)
+
+**Use Case**: Corridor-based path tracking with rectangular safety constraints.
+
+- Generates space-filling curve corridors around the reference path
+- Each corridor consists of 4-sided convex polygons
+- Provides `A` matrix and `b` vector for NMPC constraints
+
+**Key Files**:
+- `include/sfc_generator.hpp` / `src/sfc_generator.cpp` - SFC C++ implementation
+- `scripts/sfc_lib/generator.py` - SFC Python implementation
+- Enable via `config/parameters.yaml`: `sfc.enable: true`
+
+---
+
+## Current Implementation: A* + Backend Optimization
+
+**The current implementation uses A* path planning combined with backend optimization for path smoothing:**
+
+- **A* Planning**: Grid-based global path planner with Octile distance heuristic
+- **Backend Optimization**: FEM (Finite Element Method) path smoothing with configurable weights:
+  - `smooth_w_data`: Data fidelity weight (0.45)
+  - `smooth_w_smooth`: Smoothness weight (0.40)
+  - `smooth_w_curvature`: Curvature weight (0.40)
+
+**Key Files**:
+- `include/astar_planner.hpp` - C++ A* planner with memory pool optimization
+- `scripts/astar_planner.py` - Python A* implementation
 
 ## Demo
 
@@ -16,7 +62,8 @@ See the `pic` folder for demonstration videos.
 - **NMPC Control**: High-performance nonlinear model predictive control using Acados
 - **Obstacle Perception**: DBSCAN clustering for obstacle detection and tracking
 - **Path Planning**: A* global planner with dynamic obstacle avoidance
-- **Hyperplane-based Control**: Safety-critical trajectory tracking
+- **Two Avoidance Interfaces**: Hyperplane-based and SFC-based trajectory tracking
+- **Path Smoothing**: FEM-based backend optimization for smooth trajectories
 - **Extended State Observer**: ESO-based disturbance estimation (dynamic friction, slope)
 
 ## Requirements
@@ -105,15 +152,73 @@ python3 test.py
 
 Key parameters can be tuned via the launch file or command line:
 
+### A* Planning Parameters
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `astar.resolution` | 0.4 | Grid resolution (m) |
+| `astar.heuristic_weight` | 1.2 | Heuristic weight for A* |
+| `astar.reference_cost_weight` | 2.0 | Reference path attraction |
+| `astar.turning_weight` | 2.5 | Turning penalty |
+
+### Backend Optimization Parameters
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `astar.smooth_data_weight` | 0.45 | Data fidelity weight |
+| `astar.smooth_smooth_weight` | 0.35 | Smoothness weight |
+| `astar.smooth_curvature_weight` | 0.35 | Curvature weight |
+
+### Obstacle Avoidance Interface Parameters
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `sfc.enable` | false | Enable SFC interface (false = hyperplane) |
+| `sfc.robot_radius` | 0.3 | Robot radius for corridor |
+| `sfc.search_radius` | 1.0 | Obstacle search radius |
+| `sfc.longitudinal_length` | 0.5 | Corridor longitudinal length |
+| `obstacle_avoidance.base_margin` | 0.8 | Safety margin (m) |
+
+### NMPC Parameters
+
 | Parameter | Default | Description |
 |-----------|---------|-------------|
 | `nmpc_config.ref_velocity` | 5.0 | Reference velocity (m/s) |
 | `nmpc_config.control_loop_ms` | 50 | Control loop period (ms) |
+
+### Perception Parameters
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
 | `perception.dbscan_eps` | 1.2 | DBSCAN epsilon for clustering |
 | `perception.dbscan_min_pts` | 3 | Minimum points per cluster |
-| `obstacle_avoidance.base_margin` | 0.8 | Safety margin (m) |
+
+### Robot Limits
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
 | `robot_limits.max_linear_velocity` | 6.0 | Max velocity (m/s) |
 | `robot_limits.max_angular_velocity` | 2.5 | Max angular velocity (rad/s) |
+
+---
+
+## Switching Between Interfaces
+
+### Using Hyperplane Interface (Default)
+
+The hyperplane interface is enabled by default. No additional configuration needed.
+
+### Using SFC Interface
+
+Enable SFC in `config/parameters.yaml`:
+
+```yaml
+sfc:
+  enable: true
+  robot_radius: 0.3
+  search_radius: 1.0
+  longitudinal_length: 0.5
+```
 
 ---
 
@@ -125,6 +230,7 @@ Key parameters can be tuned via the launch file or command line:
 - **Recovery Mode**: When lateral error exceeds threshold, enable recovery mode with low velocity (0.5 m/s)
 
 ### TODO List
+
 - [ ] System identification for `cmd_vel` to actual velocity mapping
 - [ ] Set max angular velocity, acceleration, and velocity limits
 - [ ] Slope handling improvements
@@ -140,23 +246,30 @@ nmpc_tracker/
 ├── include/              # Header files
 │   ├── nmpc_tracker_node.hpp
 │   ├── nmpc_visualizer.hpp
-│   ├── sfc_generator.hpp
-│   ├── astar_planner.hpp
+│   ├── sfc_generator.hpp      # SFC interface
+│   ├── hyperplane_util.hpp    # Hyperplane interface
+│   ├── astar_planner.hpp      # A* planner
 │   ├── eso.hpp
-│   ├── hyperplane_util.hpp
 │   └── DBSCAN.hpp
 ├── src/                  # Source files
 │   ├── nmpc_tracker_node.cpp
-│   ├── sfc_generator.cpp
+│   ├── sfc_generator.cpp      # SFC implementation
 │   └── main.cpp
 ├── scripts/              # Python scripts
 │   ├── simulation.py
 │   ├── path_publisher.py
 │   ├── cubic_spline.py
+│   ├── astar_planner.py       # A* Python implementation
+│   ├── sfc_lib/               # SFC Python library
+│   │   ├── generator.py
+│   │   ├── config.py
+│   │   └── utils.py
 │   ├── test.py
 │   └── generate_c.py
 ├── launch/               # Launch files
 ├── pic/                  # Demo videos and images
+├── config/
+│   └── parameters.yaml   # Configuration file
 ├── CMakeLists.txt
 ├── package.xml
 └── README.md

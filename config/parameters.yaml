@@ -3,7 +3,7 @@
     nmpc_config:
       ref_velocity: 5.0             # 期望巡航速度 (m/s)
       control_loop_ms: 50           # 控制循环周期 (毫秒)
-      enable_warm_start: True
+      enable_warm_start: False
       curvature_threshold: 2000.0
       global_curvature_weight: 1.0
       local_curvature_weight: 1.0
@@ -23,7 +23,7 @@
       fov_half_angle_deg: 100.0     # 机器人前方视野半角 (度)
 
     obstacle_avoidance:
-      base_margin: 2.0              # 基础安全距离/机器人半径 (米)
+      base_margin: 2.5              # 基础安全距离/机器人半径 (米)
 
     astar:
       resolution: 0.4            # [关键] 0.2m 分辨率，平衡精度与速度
@@ -55,7 +55,7 @@
       b0_angular: 1.0
       
     sfc:
-      enable: False
+      enable: True
       robot_radius: 1.5
       search_radius: 5.0
       longitudinal_length: 4.0

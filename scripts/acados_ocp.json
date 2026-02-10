@@ -338,18 +338,18 @@
             ]
         ],
         "Zl": [
-            10000.0,
-            10000.0,
-            10000.0,
-            10000.0
+            500.0,
+            500.0,
+            500.0,
+            500.0
         ],
         "Zl_0": [],
         "Zl_e": [],
         "Zu": [
-            10000.0,
-            10000.0,
-            10000.0,
-            10000.0
+            500.0,
+            500.0,
+            500.0,
+            500.0
         ],
         "Zu_0": [],
         "Zu_e": [],
@@ -401,18 +401,18 @@
             0.0
         ],
         "zl": [
-            10000.0,
-            10000.0,
-            10000.0,
-            10000.0
+            500.0,
+            500.0,
+            500.0,
+            500.0
         ],
         "zl_0": [],
         "zl_e": [],
         "zu": [
-            10000.0,
-            10000.0,
-            10000.0,
-            10000.0
+            500.0,
+            500.0,
+            500.0,
+            500.0
         ],
         "zu_0": [],
         "zu_e": []
@@ -478,7 +478,7 @@
         "racing_control_hyperplane_cost/racing_control_hyperplane_cost_y_e_fun_jac_ut_xt.c",
         "racing_control_hyperplane_cost/racing_control_hyperplane_cost_y_e_hess.c"
     ],
-    "hash": "a27dfaab0c2c357d4fdc62b634c72727",
+    "hash": "0c2d5558a48ac93a4cb331760cae9f8e",
     "model": {
         "con_h_expr": "SX([(((obs_nx_0*(x-obs_x_0))+(obs_ny_0*(y-obs_y_0)))-obs_r_0), (((obs_nx_1*(x-obs_x_1))+(obs_ny_1*(y-obs_y_1)))-obs_r_1), (((obs_nx_2*(x-obs_x_2))+(obs_ny_2*(y-obs_y_2)))-obs_r_2), (((obs_nx_3*(x-obs_x_3))+(obs_ny_3*(y-obs_y_3)))-obs_r_3)])",
         "con_h_expr_0": [],

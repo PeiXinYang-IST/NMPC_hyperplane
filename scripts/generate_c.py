@@ -136,7 +136,7 @@ def setup_ocp(N_horizon=60, Tf=3.0):
     # 目的：防止避障约束过于严苛导致优化问题无解 (Infeasible)
     # 当车辆被迫违反约束时，允许微小违反但会加上极大的惩罚代价 (Zl, Zu)
     ocp.constraints.idxsh = np.arange(N_OBS) # 哪些不等式约束需要软化
-    Z_val, z_val = 10000.0, 10000.0
+    Z_val, z_val = 500.0, 500.0
     ocp.cost.zl = np.ones(N_OBS) * z_val # 线性惩罚 (下界)
     ocp.cost.zu = np.ones(N_OBS) * z_val # 线性惩罚 (上界)
     ocp.cost.Zl = np.ones(N_OBS) * Z_val # 二次惩罚 (下界)

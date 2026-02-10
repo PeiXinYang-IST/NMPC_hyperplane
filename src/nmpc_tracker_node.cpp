@@ -42,6 +42,7 @@ NmpcTrackerNode::NmpcTrackerNode() : Node("nmpc_node") {
     this->declare_parameter("astar.reference_cost_weight", 2.0); // 全局吸附
     this->declare_parameter("astar.turning_weight", 2.0);        // 转向惩罚
     this->declare_parameter("astar.history_bias_weight", 0.5);
+    this->declare_parameter("astar.collision_penalty_weight", 50.0);
     
     // --- [NEW] A* 平滑参数声明 ---
     this->declare_parameter("astar.smooth_data_weight", 0.45);
@@ -95,6 +96,7 @@ NmpcTrackerNode::NmpcTrackerNode() : Node("nmpc_node") {
     astar_cfg.reference_cost_weight = this->get_parameter("astar.reference_cost_weight").as_double();
     astar_cfg.turning_weight = this->get_parameter("astar.turning_weight").as_double();
     astar_cfg.history_bias_weight = this->get_parameter("astar.history_bias_weight").as_double();
+    astar_cfg.collision_penalty_weight = this->get_parameter("astar.collision_penalty_weight").as_double();
     
     astar_cfg.smooth_w_data = this->get_parameter("astar.smooth_data_weight").as_double();
     astar_cfg.smooth_w_smooth = this->get_parameter("astar.smooth_smooth_weight").as_double();
@@ -230,6 +232,7 @@ void NmpcTrackerNode::solve_cycle() {
     current_astar_cfg.heuristic_weight = this->get_parameter("astar.heuristic_weight").as_double();
     current_astar_cfg.reference_cost_weight = this->get_parameter("astar.reference_cost_weight").as_double();
     current_astar_cfg.turning_weight = this->get_parameter("astar.turning_weight").as_double();
+    current_astar_cfg.collision_penalty_weight = this->get_parameter("astar.collision_penalty_weight").as_double();
     astar_planner_->update_config(current_astar_cfg);
 
     std::vector<Point> ref_path_segment;

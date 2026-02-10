@@ -626,22 +626,22 @@ void racing_control_hyperplane_acados_setup_nlp_in(racing_control_hyperplane_sol
     double* zl = zlumem+NS*2;
     double* zu = zlumem+NS*3;
     // change only the non-zero elements:
-    Zl[0] = 10000;
-    Zl[1] = 10000;
-    Zl[2] = 10000;
-    Zl[3] = 10000;
-    Zu[0] = 10000;
-    Zu[1] = 10000;
-    Zu[2] = 10000;
-    Zu[3] = 10000;
-    zl[0] = 10000;
-    zl[1] = 10000;
-    zl[2] = 10000;
-    zl[3] = 10000;
-    zu[0] = 10000;
-    zu[1] = 10000;
-    zu[2] = 10000;
-    zu[3] = 10000;
+    Zl[0] = 500;
+    Zl[1] = 500;
+    Zl[2] = 500;
+    Zl[3] = 500;
+    Zu[0] = 500;
+    Zu[1] = 500;
+    Zu[2] = 500;
+    Zu[3] = 500;
+    zl[0] = 500;
+    zl[1] = 500;
+    zl[2] = 500;
+    zl[3] = 500;
+    zu[0] = 500;
+    zu[1] = 500;
+    zu[2] = 500;
+    zu[3] = 500;
 
     for (int i = 1; i < N; i++)
     {

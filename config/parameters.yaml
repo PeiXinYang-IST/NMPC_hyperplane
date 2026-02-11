@@ -23,14 +23,14 @@
       fov_half_angle_deg: 100.0     # 机器人前方视野半角 (度)
 
     obstacle_avoidance:
-      base_margin: 2.5              # 基础安全距离/机器人半径 (米)
+      base_margin: 1.0              # 基础安全距离/机器人半径 (米)
 
     astar:
-      resolution: 0.4            # [关键] 0.2m 分辨率，平衡精度与速度
+      resolution: 0.5            # [关键] 0.2m 分辨率，平衡精度与速度
       grid_padding: 10           # 边界留白，防止搜出地图
       
       # --- 搜索阶段 ---
-      heuristic_weight: 2.0      # 加速搜索，比 Dijkstra 快
+      heuristic_weight: 5.0      # 加速搜索，比 Dijkstra 快
       reference_cost_weight: 2.0 # 适度吸附全局路径，允许小范围切弯
       turning_weight: 2.5        # 强力抑制折线抖动，鼓励走直线
       history_bias_weight: 0.5   # 保持路径稳定性
@@ -39,7 +39,7 @@
       # 这里的逻辑是：既要跟着 A* 走(Data)，又要尽可能圆滑(Curvature)
       smooth_data_weight: 0.45      # 必须足够大，保证不撞墙
       smooth_smooth_weight: 0.35    # 负责拉直
-      smooth_curvature_weight: 0.35 # [核心] 负责消除尖角
+      smooth_curvature_weight: 0.5 # [核心] 负责消除尖角
 
     robot_limits:
       max_linear_velocity: 5.0      # 最大线速度限制 (m/s)
@@ -59,3 +59,14 @@
       robot_radius: 1.5
       search_radius: 5.0
       longitudinal_length: 4.0
+      
+    lattice:
+      path_resolution: 0.2
+      lookahead_dist: 20.0
+      num_samples: 200
+      sample_width: 0.5
+      max_width: 10.0
+      collision_radius: 1.0
+      weight_collision: 1000.0
+      weight_offset: 1.0
+      weight_consistency: 2.0

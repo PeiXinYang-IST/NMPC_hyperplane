@@ -103,8 +103,8 @@ def setup_ocp(N_horizon=60, Tf=3.0):
     ocp.constraints.ubx = np.array([7.0, 2.5])  # 速度上限 7, 最大角速度 2.5
     
     ocp.constraints.idxbu = np.array([0, 1])   # 针对 ax, alpha 设置控制约束
-    ocp.constraints.lbu = np.array([-1.5, -1.0]) # 最大刹车 -1.5, 最大转角速率 -0.75
-    ocp.constraints.ubu = np.array([1.5, 1.0])  # 最大加速 1.5, 最大转角速率 0.75
+    ocp.constraints.lbu = np.array([-1.0, -1.0]) # 最大刹车 -1.5, 最大转角速率 -0.75
+    ocp.constraints.ubu = np.array([1.0, 1.0])  # 最大加速 1.5, 最大转角速率 0.75
     
     ocp.constraints.x0 = np.zeros(nx) # 初始状态占位
 

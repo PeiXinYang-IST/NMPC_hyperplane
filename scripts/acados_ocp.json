@@ -77,7 +77,7 @@
         "idxsphi_0": [],
         "idxsphi_e": [],
         "lbu": [
-            -1.5,
+            -1.0,
             -1.0
         ],
         "lbx": [
@@ -125,7 +125,7 @@
         "lsphi_0": [],
         "lsphi_e": [],
         "ubu": [
-            1.5,
+            1.0,
             1.0
         ],
         "ubx": [
@@ -478,7 +478,7 @@
         "racing_control_hyperplane_cost/racing_control_hyperplane_cost_y_e_fun_jac_ut_xt.c",
         "racing_control_hyperplane_cost/racing_control_hyperplane_cost_y_e_hess.c"
     ],
-    "hash": "b117470baf4697538d476c6826aee520",
+    "hash": "05bd9225264545c8f8027d16559d2390",
     "model": {
         "con_h_expr": "SX([(((obs_nx_0*(x-obs_x_0))+(obs_ny_0*(y-obs_y_0)))-obs_r_0), (((obs_nx_1*(x-obs_x_1))+(obs_ny_1*(y-obs_y_1)))-obs_r_1), (((obs_nx_2*(x-obs_x_2))+(obs_ny_2*(y-obs_y_2)))-obs_r_2), (((obs_nx_3*(x-obs_x_3))+(obs_ny_3*(y-obs_y_3)))-obs_r_3)])",
         "con_h_expr_0": [],

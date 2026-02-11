@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <memory>
 #include <iostream>
+#include <chrono> // [Added] For internal timing
 #include "dbscan.hpp" 
 
 // 紧凑的节点结构体
@@ -46,13 +47,19 @@ public:
         double history_bias_weight = 0.5;   
 
         // [NEW] 碰撞惩罚权重 (软障碍代价)
-        // 这个值要很大，比如 50.0 ~ 100.0，保证除非万不得已，否则不走这里
         double collision_penalty_weight = 100.0; 
 
         // 平滑参数
         double smooth_w_data = 0.45;
         double smooth_w_smooth = 0.40;
         double smooth_w_curvature = 0.40; 
+    };
+
+    // [Added] Performance statistics struct
+    struct PerfStats {
+        double t_grid_build = 0.0; // Time to build occupancy grid (ms)
+        double t_core_search = 0.0; // Time for A* loop (ms)
+        bool timed_out = false;     // [NEW] Whether A* timed out
     };
 
     AStarPlanner(Config config) : cfg_(config) {
@@ -69,14 +76,14 @@ public:
 
     void update_config(const Config& cfg) { cfg_ = cfg; }
     Config get_config() const { return cfg_; }
+    
+    // [Added] Getter for performance stats
+    PerfStats get_perf() const { return last_perf_; }
 
     // smooth_path 保持不变...
     static std::vector<Point> smooth_path(const std::vector<Point>& raw_path, double w_data, double w_smooth, double w_curve, double tolerance = 0.001) {
         if (raw_path.size() < 3) return raw_path;
         std::vector<Point> new_path = raw_path;
-        // ... (此处省略 FEM-Smoother 代码，保持原样) ...
-        // 建议：在 smooth_path 里也可以加一个简单的逻辑：如果原始点在障碍物内，w_data 设得更大
-         // 为了篇幅，这里暂时复用你之前的 smooth_path 完整代码
         int n = new_path.size();
         double path_len = 0;
         for(size_t i=1; i<raw_path.size(); ++i) path_len += std::hypot(raw_path[i].x - raw_path[i-1].x, raw_path[i].y - raw_path[i-1].y);
@@ -107,7 +114,6 @@ public:
     }
 
     static std::vector<Point> resample_path(const std::vector<Point>& raw_path, double step_size) {
-        // ... (保持 resample_path 原样) ...
         if (raw_path.size() < 2) return raw_path;
         std::vector<Point> resampled; resampled.push_back(raw_path.front());
         double accumulated_dist = 0.0;
@@ -135,6 +141,9 @@ public:
                             const std::vector<Point>& history_path = {},
                             const std::vector<Point>& global_ref_path = {}) 
     {
+        // [Timer Start] Grid Construction
+        auto t_start_grid = std::chrono::high_resolution_clock::now();
+
         run_id_++; 
 
         int min_gx, max_gx, min_gy, max_gy;
@@ -145,15 +154,9 @@ public:
         if (width <= 0 || height <= 0 || width > max_width_ || height > max_height_) return {};
 
         // 2. 障碍物处理 [关键修改]
-        // 0: Free
-        // 1: Margin (Soft Obstacle) -> High Cost
-        // 2: Lethal (Hard Obstacle) -> Blocked
         std::vector<int8_t> occupancy_grid(width * height, 0);
         int margin_cells = std::ceil(cfg_.margin / cfg_.resolution);
         int margin_sq = margin_cells * margin_cells;
-        
-        // 定义致命半径（比如小于分辨率，或者 0.15m），只有碰到障碍物中心才算彻底堵死
-        // 这里简单处理：点云所在格子本身是 Lethal (2)，周围是 Margin (1)
         
         for (const auto& pt : all_points) {
             int cx, cy;
@@ -167,12 +170,9 @@ public:
                         int nx = cx + i; int ny = cy + j;
                         if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
                             int idx = ny * width + nx;
-                            // 如果是中心点（或非常近），标记为 2 (Lethal)
-                            // 这里定义：距离 <= 1个格子算 Lethal
                             if (dist_sq <= 1) { 
                                 occupancy_grid[idx] = 2; 
                             } 
-                            // 否则，如果还没被标记为 2，标记为 1 (Margin)
                             else if (occupancy_grid[idx] != 2) {
                                 occupancy_grid[idx] = 1;
                             }
@@ -205,16 +205,18 @@ public:
         world_to_grid(start_x, start_y, start_gx, start_gy, min_gx, min_gy);
         world_to_grid(goal_x, goal_y, goal_gx, goal_gy, min_gx, min_gy);
 
-        // [关键] 起点在 Lethal 里？如果 A* 无法起步，把起点强制设为 Soft
         if (is_lethal(start_gx, start_gy, width, height, occupancy_grid)) {
              int idx = start_gy * width + start_gx;
-             occupancy_grid[idx] = 1; // 降级为 Margin，允许起步
+             occupancy_grid[idx] = 1; 
         }
-        // [关键] 终点在 Lethal 里？把终点设为 Soft
         if (is_lethal(goal_gx, goal_gy, width, height, occupancy_grid)) {
              int idx = goal_gy * width + goal_gx;
              occupancy_grid[idx] = 1; 
         }
+
+        // [Timer End] Grid Construction
+        auto t_end_grid = std::chrono::high_resolution_clock::now();
+        last_perf_.t_grid_build = std::chrono::duration<double, std::milli>(t_end_grid - t_start_grid).count();
 
         return run_astar(start_gx, start_gy, goal_gx, goal_gy, width, height, occupancy_grid, min_gx, min_gy, history_grid_pts, ref_grid_pts);
     }
@@ -224,6 +226,7 @@ private:
     std::vector<GridNode> node_pool_;
     int max_width_, max_height_;
     int run_id_ = 0;
+    PerfStats last_perf_; // [Added]
 
     inline double get_heuristic(int x1, int y1, int x2, int y2) {
         double dx = std::abs(x1 - x2);
@@ -235,7 +238,6 @@ private:
         return &node_pool_[y * max_width_ + x];
     }
     
-    // 检查是否彻底不可通行
     bool is_lethal(int x, int y, int w, int h, const std::vector<int8_t>& grid) {
         return x >= 0 && x < w && y >= 0 && y < h && grid[y * w + x] == 2;
     }
@@ -245,6 +247,10 @@ private:
                                  const std::vector<std::pair<int, int>>& history_pts,
                                  const std::vector<std::pair<int, int>>& ref_pts) 
     {
+        // [Timer Start] Core Search
+        auto t_start_search = std::chrono::high_resolution_clock::now();
+        last_perf_.timed_out = false; // [NEW] Reset timeout flag
+
         std::priority_queue<GridNode*, std::vector<GridNode*>, NodeComparator> open_set;
         GridNode* start_node = get_node(sx, sy);
         if (start_node->visited_id != run_id_) start_node->reset(run_id_, sx, sy);
@@ -259,9 +265,21 @@ private:
         const double move_cost_base[8] = {1.0, 1.0, 1.0, 1.0, 1.414, 1.414, 1.414, 1.414};
 
         int iter = 0;
-        int max_iters = 10000;
+        int max_iters = 5000;
+        const double timeout_ms = 30.0; // [NEW] Timeout threshold in ms
+        auto check_timeout = [&]() -> bool {
+            auto now = std::chrono::high_resolution_clock::now();
+            double elapsed = std::chrono::duration<double, std::milli>(now - t_start_search).count();
+            return elapsed > timeout_ms;
+        };
 
         while(!open_set.empty() && iter++ < max_iters) {
+            // [NEW] Check timeout before processing each node
+            if (check_timeout()) {
+                last_perf_.timed_out = true;
+                return {}; // Return empty path to trigger global path fallback
+            }
+
             GridNode* curr = open_set.top(); open_set.pop();
             if (curr->is_closed) continue;
             curr->is_closed = true;
@@ -274,24 +292,19 @@ private:
                 int nx = curr->x + dx[i]; int ny = curr->y + dy[i];
                 if(nx < 0 || nx >= w || ny < 0 || ny >= h) continue;
                 
-                // [关键修改] 检查栅格状态
                 int8_t status = grid[ny*w+nx];
-                if(status == 2) continue; // Lethal (物理撞击), 绝对不走
+                if(status == 2) continue; 
                 
-                // 获取邻居节点
                 GridNode* neighbor = get_node(nx, ny);
                 if (neighbor->visited_id != run_id_) neighbor->reset(run_id_, nx, ny);
                 if (neighbor->is_closed) continue;
 
-                // --- Cost 计算 ---
                 double step_cost = move_cost_base[i];
 
-                // [关键修改] 如果在 Margin (软障碍) 里，增加巨额惩罚
                 if (status == 1) {
                     step_cost += cfg_.collision_penalty_weight;
                 }
 
-                // ... (参考路径、转向、历史偏置等其他 cost 保持不变) ...
                 if (!ref_pts.empty()) {
                     double min_ref_dist_sq = 1000.0;
                     for (const auto& rp : ref_pts) {
@@ -342,11 +355,15 @@ private:
             }
             std::reverse(path.begin(), path.end());
         }
+
+        // [Timer End] Core Search
+        auto t_end_search = std::chrono::high_resolution_clock::now();
+        last_perf_.t_core_search = std::chrono::duration<double, std::milli>(t_end_search - t_start_search).count();
+
         return path;
     }
 
     void calc_grid_bounds(double sx, double sy, double gx, double gy, const std::vector<Point>& pts, int& min_x, int& max_x, int& min_y, int& max_y) {
-        // ... (保持原样) ...
         double min_wx = std::min(sx, gx), max_wx = std::max(sx, gx);
         double min_wy = std::min(sy, gy), max_wy = std::max(sy, gy);
         double scan_margin = 10.0; 

@@ -1,7 +1,6 @@
 #ifndef NMPC_TRACKER_NODE_HPP
 #define NMPC_TRACKER_NODE_HPP
 
-// ... (原有的 includes)
 #include <rclcpp/rclcpp.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <nav_msgs/msg/path.hpp>
@@ -18,7 +17,7 @@
 #include <memory>
 #include <algorithm>
 #include <string>
-#include <Eigen/Dense> // [新增] 必须包含 Eigen
+#include <Eigen/Dense>
 
 extern "C" {
     #include "acados_solver_racing_control_hyperplane.h"
@@ -28,8 +27,9 @@ extern "C" {
 #include "hyperplane_util.hpp"
 #include "nmpc_visualizer.hpp"
 #include "astar_planner.hpp"
-#include "eso.hpp" 
-#include "sfc_generator.hpp" // [新增] SFC 头文件
+#include "eso.hpp"
+#include "sfc_generator.hpp"
+#include "lattice_planner.hpp" 
 
 class NmpcTrackerNode : public rclcpp::Node {
 public:
@@ -39,7 +39,7 @@ public:
 private:
     void solve_cycle();
 
-    // ... (保留原有的辅助函数声明) ...
+    // 辅助函数
     double unwrap_yaw(double target_yaw, double current_yaw);
     int get_closest_path_index(double x, double y);
     bool is_in_fov(double ox, double oy);
@@ -51,7 +51,10 @@ private:
     void publish_command(ocp_nlp_config* conf, ocp_nlp_dims* dims, ocp_nlp_out* out, double dist_lin, double dist_ang);
     void publish_emergency_brake();
 
-    // [修改] 更新 render_visualization 签名，接受 sfc_corridor
+    std::vector<Point2D> convert_global_path_to_lattice(const nav_msgs::msg::Path& path);
+    std::vector<Point2D> convert_obs_to_lattice(const std::vector<Point>& obs);
+
+    // 可视化函数，包含 Lattice 的 Candidates 和 Best Path
     void render_visualization(const std::vector<std::vector<double>>& pred_traj, 
                               const std::vector<NmpcVisualizer::VizObs>& constraint_viz, 
                               const std::vector<std::pair<double, double>>& target_path_viz,
@@ -59,17 +62,20 @@ private:
                               double goal_x, double goal_y,
                               const std::vector<geometry_msgs::msg::Point>& curve_pts,
                               const std::vector<std_msgs::msg::ColorRGBA>& curve_cols,
-                              const std::vector<SFC_Constraint>& sfc_corridor); // [新增参数]
+                              const std::vector<SFC_Constraint>& sfc_corridor,
+                              const std::vector<CandidatePath>& lattice_candidates,
+                              const CandidatePath& best_lattice_path);
 
     racing_control_hyperplane_solver_capsule* capsule_;
     std::unique_ptr<NmpcVisualizer> visualizer_;
     std::unique_ptr<DBSCAN> cluster_worker_;
-    std::unique_ptr<AStarPlanner> astar_planner_;
-    std::unique_ptr<SFCGenerator> sfc_gen_; // [新增] SFC 生成器实例
+    std::unique_ptr<AStarPlanner> astar_planner_; // 保留指针但暂不使用
+    std::unique_ptr<SFCGenerator> sfc_gen_;
     std::unique_ptr<ESO> linear_eso_;
     std::unique_ptr<ESO> angular_eso_;
+    
+    std::unique_ptr<LatticePlanner> lattice_planner_;
 
-    // ... (保留原有的 ROS 接口和变量) ...
     rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_odom_;
     rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sub_cloud_;
     rclcpp::Subscription<nav_msgs::msg::Path>::SharedPtr sub_path_;

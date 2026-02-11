@@ -704,8 +704,8 @@ void racing_control_hyperplane_acados_setup_nlp_in(racing_control_hyperplane_sol
     double* lubu = calloc(2*NBU, sizeof(double));
     double* lbu = lubu;
     double* ubu = lubu + NBU;
-    lbu[0] = -1.5;
-    ubu[0] = 1.5;
+    lbu[0] = -1;
+    ubu[0] = 1;
     lbu[1] = -1;
     ubu[1] = 1;
 

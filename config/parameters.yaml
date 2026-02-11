@@ -63,9 +63,9 @@
     lattice:
       path_resolution: 0.2
       lookahead_dist: 20.0
-      num_samples: 200
-      sample_width: 0.5
-      max_width: 10.0
+      num_samples: 500
+      sample_width: 0.1
+      max_width: 15.0
       collision_radius: 1.0
       weight_collision: 1000.0
       weight_offset: 1.0

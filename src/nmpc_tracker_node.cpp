@@ -510,6 +510,16 @@ void NmpcTrackerNode::solve_cycle() {
     }
 
     int status = racing_control_hyperplane_acados_solve(capsule_);
+auto solver = racing_control_hyperplane_acados_get_nlp_solver(capsule_);
+
+// 2. Extract SQP and QP iterations
+int qp_iter_sum = 0;
+int sqp_iter = 0;
+
+// Use 'solver' instead of 'conf'
+ocp_nlp_get(solver, "sqp_iter", &sqp_iter);
+ocp_nlp_get(solver, "qp_iter", &qp_iter_sum);
+
     auto end_solve = std::chrono::high_resolution_clock::now();
     double t_total = std::chrono::duration<double, std::milli>(end_solve - start_total).count();
     
@@ -525,18 +535,18 @@ void NmpcTrackerNode::solve_cycle() {
     if (status == 0) {
         // [Format]: SolveTime | A*Time | Status | ESO(Lin/Ang) | Curve(Glob/Loc) | Step | Vel
         snprintf(log_buf, sizeof(log_buf), 
-            "TIME[Tot:%.1f A*:%.1f] Stat:%s ESO[L:%.2f A:%.2f] Crv[G:%.1f L:%.1f] Step:%.2f Vel:%.2f %s",
-            t_total, 
-            t_astar, 
-            astar_str.c_str(), 
-            dist_acc_lin, 
-            dist_acc_ang,
-            global_curve_sum, 
-            weighted_local_curve,
-            dynamic_step_dist,
-            gv,
-            is_emergency ? "[RECOVERY]" : "");
-            
+        "TIME[Tot:%.1f A*:%.1f] Stat:%s Iter:%d ESO[L:%.2f A:%.2f] Crv[G:%.1f L:%.1f] Step:%.2f Vel:%.2f %s",
+        t_total, 
+        t_astar, 
+        astar_str.c_str(), 
+        qp_iter_sum,  // 打印 QP 迭代次数
+        dist_acc_lin, 
+        dist_acc_ang,
+        global_curve_sum, 
+        weighted_local_curve,
+        dynamic_step_dist,
+        gv,
+        is_emergency ? "[RECOVERY]" : "");
         // 如果需要每帧必打，直接使用 INFO；如果太快看不清，改用 INFO_THROTTLE
         RCLCPP_INFO(this->get_logger(), "%s", log_buf);
 

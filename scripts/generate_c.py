@@ -151,7 +151,17 @@ def setup_ocp(N_horizon=60, Tf=3.0):
     ocp.solver_options.hessian_approx = 'GAUSS_NEWTON'        # 高斯-牛顿近似 (适用于最小二乘)
     ocp.solver_options.integrator_type = 'ERK'                 # 显式龙格-库塔积分器
     ocp.solver_options.nlp_solver_type = 'SQP_RTI'             # 实时迭代 (Real-Time Iteration) 算法
+    tol = 1e-6
+    ocp.solver_options.qp_solver_tol_stat = tol
+    ocp.solver_options.qp_solver_tol_eq   = tol
+    ocp.solver_options.qp_solver_tol_ineq = tol
+    ocp.solver_options.qp_solver_tol_comp = tol
 
+    # 限制 QP 最大迭代次数 (简单场景5次够了，复杂场景10次强制截断)
+    ocp.solver_options.qp_solver_iter_max = 10 
+
+    ocp.solver_options.print_level = 0
+    ocp.solver_options.num_threads = 4 
     return ocp
 
 if __name__ == '__main__':

@@ -30,7 +30,7 @@
       grid_padding: 10           # 边界留白，防止搜出地图
       
       # --- 搜索阶段 ---
-      heuristic_weight: 1.2      # 加速搜索，比 Dijkstra 快
+      heuristic_weight: 2.0      # 加速搜索，比 Dijkstra 快
       reference_cost_weight: 2.0 # 适度吸附全局路径，允许小范围切弯
       turning_weight: 2.5        # 强力抑制折线抖动，鼓励走直线
       history_bias_weight: 0.5   # 保持路径稳定性
@@ -55,7 +55,7 @@
       b0_angular: 1.0
       
     sfc:
-      enable: True
+      enable: False
       robot_radius: 1.5
       search_radius: 5.0
       longitudinal_length: 4.0

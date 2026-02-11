@@ -259,7 +259,7 @@ private:
         const double move_cost_base[8] = {1.0, 1.0, 1.0, 1.0, 1.414, 1.414, 1.414, 1.414};
 
         int iter = 0;
-        int max_iters = 30000;
+        int max_iters = 10000;
 
         while(!open_set.empty() && iter++ < max_iters) {
             GridNode* curr = open_set.top(); open_set.pop();

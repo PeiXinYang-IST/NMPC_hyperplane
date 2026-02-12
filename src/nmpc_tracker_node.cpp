@@ -4,9 +4,9 @@
 #include <cmath>
 #include <algorithm> 
 
-#define N_PARAM 20
-#define N_HORIZON 60  
-#define DT 0.05       
+#define N_PARAM 0
+#define N_HORIZON 60
+#define DT 0.06       
 
 NmpcTrackerNode::NmpcTrackerNode() : Node("nmpc_node") {
     // ==========================================
@@ -17,8 +17,6 @@ NmpcTrackerNode::NmpcTrackerNode() : Node("nmpc_node") {
     this->declare_parameter("nmpc_config.enable_warm_start", true); 
     this->declare_parameter("nmpc_config.curvature_threshold", 1.5); 
     this->declare_parameter("nmpc_config.global_curvature_weight", 1.0);
-    this->declare_parameter("nmpc_config.local_curvature_weight", 1.5);
-    this->declare_parameter("nmpc_config.local_curvature_smoothing", 0.3);
     this->declare_parameter("track.road_half_width", 5.0); 
     this->declare_parameter("track.use_virtual_walls", true);
     this->declare_parameter("perception.dbscan_eps", 1.2);
@@ -281,9 +279,7 @@ void NmpcTrackerNode::solve_cycle() {
     // =========================================================
     double curvature_threshold = this->get_parameter("nmpc_config.curvature_threshold").as_double();
     double global_curve_weight = this->get_parameter("nmpc_config.global_curvature_weight").as_double();
-    double local_curve_weight = this->get_parameter("nmpc_config.local_curvature_weight").as_double();
-    double smoothing_alpha = this->get_parameter("nmpc_config.local_curvature_smoothing").as_double();
-    
+
     // 6.1 全局曲率 (前瞻未来路段)
     double global_curve_sum = 0.0;
     std::vector<geometry_msgs::msg::Point> curve_viz_pts;
@@ -324,33 +320,14 @@ void NmpcTrackerNode::solve_cycle() {
     }
     global_curve_sum *= global_curve_weight;
 
-    // 6.2 局部曲率 (当前规划路径的弯曲程度)
-    double raw_local_curve_sum = 0.0;
-    if (guide_path.size() > 2) {
-        int check_limit_local = std::min((int)guide_path.size() - 1, 30); 
-        for (int k = 0; k < check_limit_local - 1; k++) {
-            double dx1 = guide_path[k+1].x - guide_path[k].x; 
-            double dy1 = guide_path[k+1].y - guide_path[k].y;
-            double yaw1 = std::atan2(dy1, dx1);
-            if (k > 0) {
-                double dx0 = guide_path[k].x - guide_path[k-1].x; 
-                double dy0 = guide_path[k].y - guide_path[k-1].y;
-                double yaw0 = std::atan2(dy0, dx0);
-                raw_local_curve_sum += std::abs(unwrap_yaw(yaw1, yaw0) - yaw0);
-            }
-        }
-    }
-    last_filtered_local_curve_ = smoothing_alpha * raw_local_curve_sum + (1.0 - smoothing_alpha) * last_filtered_local_curve_;
-    double weighted_local_curve = last_filtered_local_curve_ * local_curve_weight;
-
-    // 6.3 动态步长计算
-    double total_curve = std::max(global_curve_sum, weighted_local_curve);
+    // 6.2 动态步长计算 (仅使用全局曲率)
+    double total_curve = global_curve_sum;
     double curve_ratio = std::clamp(total_curve / curvature_threshold, 0.0, 1.0);
-    double max_step = target_ref_vel * DT;
-    double min_step = max_step * 0.4; // 弯道处最大加密到 2.5倍
+    double max_step = 0.25;
+    double min_step = 0.15; // 弯道处最大加密到 2.5倍
     double dynamic_step_dist = max_step - curve_ratio * (max_step - min_step); 
-    if (dynamic_step_dist < 0.1) dynamic_step_dist = 0.1; 
-
+    if (dynamic_step_dist < 0.15) dynamic_step_dist = 0.15; 
+    
     // =========================================================
     // 7. NMPC 构建 & 求解 (带插值 Interpolation)
     // =========================================================
@@ -523,16 +500,16 @@ void NmpcTrackerNode::solve_cycle() {
     std::string plan_status = plan_success ? "Lattice" : "Fallback";
     
     if (status == 0) {
-        snprintf(log_buf, sizeof(log_buf), 
-        "TIME[Tot:%.1f Plan:%.1f] Stat:%s Iter:%d ESO[L:%.2f A:%.2f] Crv[G:%.1f L:%.1f] Step:%.2f %s",
-        t_total, 
-        t_plan, 
-        plan_status.c_str(), 
+        snprintf(log_buf, sizeof(log_buf),
+        "TIME[Tot:%.1f Plan:%.1f] Stat:%s Iter:%d V:%.2f ESO[L:%.2f A:%.2f] Crv:%.1f Step:%.2f %s",
+        t_total,
+        t_plan,
+        plan_status.c_str(),
         qp_iter_sum,
-        dist_acc_lin, 
+        gv,
+        dist_acc_lin,
         dist_acc_ang,
         global_curve_sum,
-        weighted_local_curve,
         dynamic_step_dist,
         is_emergency ? "[RECOVERY]" : "");
         RCLCPP_INFO(this->get_logger(), "%s", log_buf);

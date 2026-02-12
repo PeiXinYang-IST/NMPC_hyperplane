@@ -36,7 +36,6 @@ extern "C" {
 #define casadi_s3 CASADI_PREFIX(s3)
 #define casadi_s4 CASADI_PREFIX(s4)
 #define casadi_s5 CASADI_PREFIX(s5)
-#define casadi_s6 CASADI_PREFIX(s6)
 
 /* Symbol visibility in DLLs */
 #ifndef CASADI_SYMBOL_EXPORT
@@ -58,12 +57,11 @@ static const casadi_int casadi_s1[3] = {2, 1, 1};
 static const casadi_int casadi_s2[3] = {0, 1, 1};
 static const casadi_int casadi_s3[3] = {7, 1, 1};
 static const casadi_int casadi_s4[3] = {0, 0, 1};
-static const casadi_int casadi_s5[3] = {20, 1, 1};
-static const casadi_int casadi_s6[12] = 
+static const casadi_int casadi_s5[12] = 
   {7, 7, 0, 0, 0, 0, 0, 0,
   1, 2, 6, 5};
 
-/* racing_control_hyperplane_cost_y_hess:(i0[5],i1[2],i2[0],i3[7],i4[],i5[20])->(o0[7x7,2nz]) */
+/* racing_control_hyperplane_cost_y_hess:(i0[5],i1[2],i2[0],i3[7],i4[],i5[0])->(o0[7x7,2nz]) */
 static int casadi_f0(const casadi_real** arg, casadi_real** res, casadi_int* iw, casadi_real* w, int mem) {
   casadi_real a0;
   a0=arg[3]? arg[3][6] : 0;
@@ -136,14 +134,14 @@ CASADI_SYMBOL_EXPORT const casadi_int* racing_control_hyperplane_cost_y_hess_spa
     case 2: return casadi_s2;
     case 3: return casadi_s3;
     case 4: return casadi_s4;
-    case 5: return casadi_s5;
+    case 5: return casadi_s2;
     default: return 0;
   }
 }
 
 CASADI_SYMBOL_EXPORT const casadi_int* racing_control_hyperplane_cost_y_hess_sparsity_out(casadi_int i) {
   switch (i) {
-    case 0: return casadi_s6;
+    case 0: return casadi_s5;
     default: return 0;
   }
 }

@@ -52,10 +52,10 @@ extern "C" {
 
 static const casadi_int casadi_s0[3] = {5, 1, 1};
 static const casadi_int casadi_s1[3] = {2, 1, 1};
-static const casadi_int casadi_s2[3] = {20, 1, 1};
+static const casadi_int casadi_s2[3] = {0, 1, 1};
 static const casadi_int casadi_s3[3] = {7, 1, 1};
 
-/* racing_control_hyperplane_expl_vde_adj:(i0[5],i1[5],i2[2],i3[20])->(o0[7]) */
+/* racing_control_hyperplane_expl_vde_adj:(i0[5],i1[5],i2[2],i3[0])->(o0[7]) */
 static int casadi_f0(const casadi_real** arg, casadi_real** res, casadi_int* iw, casadi_real* w, int mem) {
   casadi_real a0, a1, a2, a3, a4, a5;
   a0=0.;

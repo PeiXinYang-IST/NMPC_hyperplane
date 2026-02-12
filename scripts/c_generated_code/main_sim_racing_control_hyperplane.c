@@ -83,31 +83,6 @@ int main()
     double u0[NU];
     u0[0] = 0.0;
     u0[1] = 0.0;
-    // set parameters
-    double p[NP];
-    p[0] = 1000;
-    p[1] = 1000;
-    p[2] = 1;
-    p[3] = 1;
-    p[4] = 0;
-    p[5] = 1000;
-    p[6] = 1000;
-    p[7] = 1;
-    p[8] = 1;
-    p[9] = 0;
-    p[10] = 1000;
-    p[11] = 1000;
-    p[12] = 1;
-    p[13] = 1;
-    p[14] = 0;
-    p[15] = 1000;
-    p[16] = 1000;
-    p[17] = 1;
-    p[18] = 1;
-    p[19] = 0;
-
-    racing_control_hyperplane_acados_sim_update_params(capsule, p, NP);
-  
 
   
 

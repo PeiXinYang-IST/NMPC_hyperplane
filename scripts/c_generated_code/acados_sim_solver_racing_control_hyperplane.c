@@ -73,7 +73,7 @@ int racing_control_hyperplane_acados_sim_create(racing_control_hyperplane_sim_so
     const int np = RACING_CONTROL_HYPERPLANE_NP;
     bool tmp_bool;
 
-    double Tsim = 0.05;
+    double Tsim = 0.060000000000000005;
 
     capsule->acados_sim_mem = NULL;
 
@@ -179,29 +179,6 @@ int racing_control_hyperplane_acados_sim_create(racing_control_hyperplane_sim_so
 
     capsule->acados_sim_mem = racing_control_hyperplane_sim_solver->mem;
 
-
-    /* initialize parameter values */
-    double* p = calloc(np, sizeof(double));
-    
-    p[0] = 1000;
-    p[1] = 1000;
-    p[2] = 1;
-    p[3] = 1;
-    p[5] = 1000;
-    p[6] = 1000;
-    p[7] = 1;
-    p[8] = 1;
-    p[10] = 1000;
-    p[11] = 1000;
-    p[12] = 1;
-    p[13] = 1;
-    p[15] = 1000;
-    p[16] = 1000;
-    p[17] = 1;
-    p[18] = 1;
-
-    racing_control_hyperplane_acados_sim_update_params(capsule, p, np);
-    free(p);
 
 
     /* initialize input */

@@ -58,10 +58,10 @@ def export_race_model(n_obstacles=5):
     
     return model, n_obstacles
 
-def setup_ocp(N_horizon=60, Tf=3.0):
+def setup_ocp(N_horizon=60, Tf=3.6):
     ocp = AcadosOcp()
     
-    N_OBS = 4 # 设定最大支持 5 个障碍物
+    N_OBS = 0 # 设定最大支持 5 个障碍物
     model, _ = export_race_model(n_obstacles=N_OBS)
     ocp.model = model
     
@@ -108,7 +108,6 @@ def setup_ocp(N_horizon=60, Tf=3.0):
     
     ocp.constraints.x0 = np.zeros(nx) # 初始状态占位
 
-    # --- 超平面避障约束逻辑 (Hyperplane Obstacle Avoidance) ---
     # 原理：车辆必须位于由法向量 (nx, ny) 和障碍物中心 (ox, oy) 确定的直线的一侧
     p_sym = ocp.model.p
     x_sym = ocp.model.x[0]
@@ -136,7 +135,7 @@ def setup_ocp(N_horizon=60, Tf=3.0):
     # 目的：防止避障约束过于严苛导致优化问题无解 (Infeasible)
     # 当车辆被迫违反约束时，允许微小违反但会加上极大的惩罚代价 (Zl, Zu)
     ocp.constraints.idxsh = np.arange(N_OBS) # 哪些不等式约束需要软化
-    Z_val, z_val = 500.0, 500.0
+    Z_val, z_val = 100.0, 100.0
     ocp.cost.zl = np.ones(N_OBS) * z_val # 线性惩罚 (下界)
     ocp.cost.zu = np.ones(N_OBS) * z_val # 线性惩罚 (上界)
     ocp.cost.Zl = np.ones(N_OBS) * Z_val # 二次惩罚 (下界)

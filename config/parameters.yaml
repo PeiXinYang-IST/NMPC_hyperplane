@@ -4,10 +4,8 @@
       ref_velocity: 5.0             # 期望巡航速度 (m/s)
       control_loop_ms: 50           # 控制循环周期 (毫秒)
       enable_warm_start: False
-      curvature_threshold: 2000.0
+      curvature_threshold: 3.0
       global_curvature_weight: 1.0
-      local_curvature_weight: 1.0
-      local_curvature_smoothing: 0.3
 
     safety:
       max_cte_ratio: 10.0     #暂时不开
@@ -56,17 +54,17 @@
       
     sfc:
       enable: False
-      robot_radius: 1.5
+      robot_radius: 1.0
       search_radius: 5.0
       longitudinal_length: 4.0
       
     lattice:
       path_resolution: 0.2
-      lookahead_dist: 20.0
+      lookahead_dist: 30.0
       num_samples: 500
       sample_width: 0.1
       max_width: 15.0
       collision_radius: 1.0
       weight_collision: 1000.0
-      weight_offset: 1.0
+      weight_offset: 3.0
       weight_consistency: 2.0

@@ -42,7 +42,6 @@
 #include "racing_control_hyperplane_model/racing_control_hyperplane_model.h"
 
 
-#include "racing_control_hyperplane_constraints/racing_control_hyperplane_constraints.h"
 #include "racing_control_hyperplane_cost/racing_control_hyperplane_cost.h"
 
 
@@ -343,16 +342,6 @@ void racing_control_hyperplane_acados_create_setup_functions(racing_control_hype
     ext_fun_opts.external_workspace = true;
     if (N > 0)
     {
-        // constraints.constr_type == "BGH" and dims.nh > 0
-        capsule->nl_constr_h_fun_jac = (external_function_external_param_casadi *) malloc(sizeof(external_function_external_param_casadi)*(N-1));
-        for (int i = 0; i < N-1; i++) {
-            MAP_CASADI_FNC(nl_constr_h_fun_jac[i], racing_control_hyperplane_constr_h_fun_jac_uxt_zt);
-        }
-        capsule->nl_constr_h_fun = (external_function_external_param_casadi *) malloc(sizeof(external_function_external_param_casadi)*(N-1));
-        for (int i = 0; i < N-1; i++) {
-            MAP_CASADI_FNC(nl_constr_h_fun[i], racing_control_hyperplane_constr_h_fun);
-        }
-    
         // nonlinear least squares function
         MAP_CASADI_FNC(cost_y_0_fun, racing_control_hyperplane_cost_y_0_fun);
         MAP_CASADI_FNC(cost_y_0_fun_jac_ut_xt, racing_control_hyperplane_cost_y_0_fun_jac_ut_xt);
@@ -406,30 +395,7 @@ void racing_control_hyperplane_acados_create_setup_functions(racing_control_hype
 void racing_control_hyperplane_acados_create_set_default_parameters(racing_control_hyperplane_solver_capsule* capsule)
 {
 
-    const int N = capsule->nlp_solver_plan->N;
-    // initialize parameters to nominal value
-    double* p = calloc(NP, sizeof(double));
-    p[0] = 1000;
-    p[1] = 1000;
-    p[2] = 1;
-    p[3] = 1;
-    p[5] = 1000;
-    p[6] = 1000;
-    p[7] = 1;
-    p[8] = 1;
-    p[10] = 1000;
-    p[11] = 1000;
-    p[12] = 1;
-    p[13] = 1;
-    p[15] = 1000;
-    p[16] = 1000;
-    p[17] = 1;
-    p[18] = 1;
-
-    for (int i = 0; i <= N; i++) {
-        racing_control_hyperplane_acados_update_params(capsule, i, p, NP);
-    }
-    free(p);
+    // no parameters defined
 
 
     // no global parameters defined
@@ -467,73 +433,73 @@ void racing_control_hyperplane_acados_setup_nlp_in(racing_control_hyperplane_sol
     {
         // set time_steps
     
-        double time_step = 0.05;
+        double time_step = 0.060000000000000005;
         for (int i = 0; i < N; i++)
         {
             ocp_nlp_in_set(nlp_config, nlp_dims, nlp_in, i, "Ts", &time_step);
         }
         // set cost scaling
         double* cost_scaling = malloc((N+1)*sizeof(double));
-        cost_scaling[0] = 0.05;
-        cost_scaling[1] = 0.05;
-        cost_scaling[2] = 0.05;
-        cost_scaling[3] = 0.05;
-        cost_scaling[4] = 0.05;
-        cost_scaling[5] = 0.05;
-        cost_scaling[6] = 0.05;
-        cost_scaling[7] = 0.05;
-        cost_scaling[8] = 0.05;
-        cost_scaling[9] = 0.05;
-        cost_scaling[10] = 0.05;
-        cost_scaling[11] = 0.05;
-        cost_scaling[12] = 0.05;
-        cost_scaling[13] = 0.05;
-        cost_scaling[14] = 0.05;
-        cost_scaling[15] = 0.05;
-        cost_scaling[16] = 0.05;
-        cost_scaling[17] = 0.05;
-        cost_scaling[18] = 0.05;
-        cost_scaling[19] = 0.05;
-        cost_scaling[20] = 0.05;
-        cost_scaling[21] = 0.05;
-        cost_scaling[22] = 0.05;
-        cost_scaling[23] = 0.05;
-        cost_scaling[24] = 0.05;
-        cost_scaling[25] = 0.05;
-        cost_scaling[26] = 0.05;
-        cost_scaling[27] = 0.05;
-        cost_scaling[28] = 0.05;
-        cost_scaling[29] = 0.05;
-        cost_scaling[30] = 0.05;
-        cost_scaling[31] = 0.05;
-        cost_scaling[32] = 0.05;
-        cost_scaling[33] = 0.05;
-        cost_scaling[34] = 0.05;
-        cost_scaling[35] = 0.05;
-        cost_scaling[36] = 0.05;
-        cost_scaling[37] = 0.05;
-        cost_scaling[38] = 0.05;
-        cost_scaling[39] = 0.05;
-        cost_scaling[40] = 0.05;
-        cost_scaling[41] = 0.05;
-        cost_scaling[42] = 0.05;
-        cost_scaling[43] = 0.05;
-        cost_scaling[44] = 0.05;
-        cost_scaling[45] = 0.05;
-        cost_scaling[46] = 0.05;
-        cost_scaling[47] = 0.05;
-        cost_scaling[48] = 0.05;
-        cost_scaling[49] = 0.05;
-        cost_scaling[50] = 0.05;
-        cost_scaling[51] = 0.05;
-        cost_scaling[52] = 0.05;
-        cost_scaling[53] = 0.05;
-        cost_scaling[54] = 0.05;
-        cost_scaling[55] = 0.05;
-        cost_scaling[56] = 0.05;
-        cost_scaling[57] = 0.05;
-        cost_scaling[58] = 0.05;
-        cost_scaling[59] = 0.05;
+        cost_scaling[0] = 0.060000000000000005;
+        cost_scaling[1] = 0.060000000000000005;
+        cost_scaling[2] = 0.060000000000000005;
+        cost_scaling[3] = 0.060000000000000005;
+        cost_scaling[4] = 0.060000000000000005;
+        cost_scaling[5] = 0.060000000000000005;
+        cost_scaling[6] = 0.060000000000000005;
+        cost_scaling[7] = 0.060000000000000005;
+        cost_scaling[8] = 0.060000000000000005;
+        cost_scaling[9] = 0.060000000000000005;
+        cost_scaling[10] = 0.060000000000000005;
+        cost_scaling[11] = 0.060000000000000005;
+        cost_scaling[12] = 0.060000000000000005;
+        cost_scaling[13] = 0.060000000000000005;
+        cost_scaling[14] = 0.060000000000000005;
+        cost_scaling[15] = 0.060000000000000005;
+        cost_scaling[16] = 0.060000000000000005;
+        cost_scaling[17] = 0.060000000000000005;
+        cost_scaling[18] = 0.060000000000000005;
+        cost_scaling[19] = 0.060000000000000005;
+        cost_scaling[20] = 0.060000000000000005;
+        cost_scaling[21] = 0.060000000000000005;
+        cost_scaling[22] = 0.060000000000000005;
+        cost_scaling[23] = 0.060000000000000005;
+        cost_scaling[24] = 0.060000000000000005;
+        cost_scaling[25] = 0.060000000000000005;
+        cost_scaling[26] = 0.060000000000000005;
+        cost_scaling[27] = 0.060000000000000005;
+        cost_scaling[28] = 0.060000000000000005;
+        cost_scaling[29] = 0.060000000000000005;
+        cost_scaling[30] = 0.060000000000000005;
+        cost_scaling[31] = 0.060000000000000005;
+        cost_scaling[32] = 0.060000000000000005;
+        cost_scaling[33] = 0.060000000000000005;
+        cost_scaling[34] = 0.060000000000000005;
+        cost_scaling[35] = 0.060000000000000005;
+        cost_scaling[36] = 0.060000000000000005;
+        cost_scaling[37] = 0.060000000000000005;
+        cost_scaling[38] = 0.060000000000000005;
+        cost_scaling[39] = 0.060000000000000005;
+        cost_scaling[40] = 0.060000000000000005;
+        cost_scaling[41] = 0.060000000000000005;
+        cost_scaling[42] = 0.060000000000000005;
+        cost_scaling[43] = 0.060000000000000005;
+        cost_scaling[44] = 0.060000000000000005;
+        cost_scaling[45] = 0.060000000000000005;
+        cost_scaling[46] = 0.060000000000000005;
+        cost_scaling[47] = 0.060000000000000005;
+        cost_scaling[48] = 0.060000000000000005;
+        cost_scaling[49] = 0.060000000000000005;
+        cost_scaling[50] = 0.060000000000000005;
+        cost_scaling[51] = 0.060000000000000005;
+        cost_scaling[52] = 0.060000000000000005;
+        cost_scaling[53] = 0.060000000000000005;
+        cost_scaling[54] = 0.060000000000000005;
+        cost_scaling[55] = 0.060000000000000005;
+        cost_scaling[56] = 0.060000000000000005;
+        cost_scaling[57] = 0.060000000000000005;
+        cost_scaling[58] = 0.060000000000000005;
+        cost_scaling[59] = 0.060000000000000005;
         cost_scaling[60] = 1;
         for (int i = 0; i <= N; i++)
         {
@@ -619,38 +585,6 @@ void racing_control_hyperplane_acados_setup_nlp_in(racing_control_hyperplane_sol
 
 
 
-    // slacks
-    double* zlumem = calloc(4*NS, sizeof(double));
-    double* Zl = zlumem+NS*0;
-    double* Zu = zlumem+NS*1;
-    double* zl = zlumem+NS*2;
-    double* zu = zlumem+NS*3;
-    // change only the non-zero elements:
-    Zl[0] = 500;
-    Zl[1] = 500;
-    Zl[2] = 500;
-    Zl[3] = 500;
-    Zu[0] = 500;
-    Zu[1] = 500;
-    Zu[2] = 500;
-    Zu[3] = 500;
-    zl[0] = 500;
-    zl[1] = 500;
-    zl[2] = 500;
-    zl[3] = 500;
-    zu[0] = 500;
-    zu[1] = 500;
-    zu[2] = 500;
-    zu[3] = 500;
-
-    for (int i = 1; i < N; i++)
-    {
-        ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, i, "Zl", Zl);
-        ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, i, "Zu", Zu);
-        ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, i, "zl", zl);
-        ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, i, "zu", zu);
-    }
-    free(zlumem);
 
 
 
@@ -746,28 +680,6 @@ void racing_control_hyperplane_acados_setup_nlp_in(racing_control_hyperplane_sol
     free(lubx);
 
 
-    // set up nonlinear constraints for stage 1 to N-1
-    double* luh = calloc(2*NH, sizeof(double));
-    double* lh = luh;
-    double* uh = luh + NH;
-    uh[0] = 1000000000;
-    uh[1] = 1000000000;
-    uh[2] = 1000000000;
-    uh[3] = 1000000000;
-
-    for (int i = 1; i < N; i++)
-    {
-        ocp_nlp_constraints_model_set_external_param_fun(nlp_config, nlp_dims, nlp_in, i, "nl_constr_h_fun_jac",
-                                      &capsule->nl_constr_h_fun_jac[i-1]);
-        ocp_nlp_constraints_model_set_external_param_fun(nlp_config, nlp_dims, nlp_in, i, "nl_constr_h_fun",
-                                      &capsule->nl_constr_h_fun[i-1]);
-        
-        ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, nlp_out, i, "lh", lh);
-        ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, nlp_out, i, "uh", uh);
-        
-        
-    }
-    free(luh);
 
 
 
@@ -776,24 +688,6 @@ void racing_control_hyperplane_acados_setup_nlp_in(racing_control_hyperplane_sol
 
 
 
-    // set up soft bounds for nonlinear constraints
-    int* idxsh = malloc(NSH * sizeof(int));
-    idxsh[0] = 0;
-    idxsh[1] = 1;
-    idxsh[2] = 2;
-    idxsh[3] = 3;
-    double* lush = calloc(2*NSH, sizeof(double));
-    double* lsh = lush;
-    double* ush = lush + NSH;
-
-    for (int i = 1; i < N; i++)
-    {
-        ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, nlp_out, i, "idxsh", idxsh);
-        ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, nlp_out, i, "lsh", lsh);
-        ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, nlp_out, i, "ush", ush);
-    }
-    free(idxsh);
-    free(lush);
 
 
 
@@ -1121,7 +1015,7 @@ int racing_control_hyperplane_acados_update_params(racing_control_hyperplane_sol
 {
     int solver_status = 0;
 
-    int casadi_np = 20;
+    int casadi_np = 0;
     if (casadi_np != np) {
         printf("acados_update_params: trying to set %i parameters for external functions."
             " External function has %i parameters. Exiting.\n", np, casadi_np);
@@ -1215,13 +1109,6 @@ int racing_control_hyperplane_acados_free(racing_control_hyperplane_solver_capsu
     external_function_external_param_casadi_free(&capsule->cost_y_e_fun_jac_ut_xt);
 
     // constraints
-    for (int i = 0; i < N-1; i++)
-    {
-        external_function_external_param_casadi_free(&capsule->nl_constr_h_fun_jac[i]);
-        external_function_external_param_casadi_free(&capsule->nl_constr_h_fun[i]);
-    }
-    free(capsule->nl_constr_h_fun_jac);
-    free(capsule->nl_constr_h_fun);
 
 
 

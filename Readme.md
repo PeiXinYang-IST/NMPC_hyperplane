@@ -391,3 +391,12 @@ double dynamic_step_dist = max_step - curve_ratio * (max_step - min_step);
 1.可视化中查看前端选择的路径（蓝色路径中选择出的绿色路径）是否较贴合全局轨迹
 2.nmpc的预测轨迹是否贴合前端绿色路径
 3.查看终端中的打印 总时间是否超过30ms 若超过30ms则时间复杂度较高（目前orin上一次循环应为10ms左右）
+
+## 5. 脚本说明
+
+| 脚本 | 说明 |
+|------|------|
+| `simulation.py` | 仅做仿真，发布 odom 和模拟障碍物点云。**实际跑不要运行！** 我们的 odom 是从 rtk node 中获取的 |
+| `path_publisher.py` | 同上，仅做仿真测试程序是否正常。**实际跑不要运行！** |
+| `rtk_path.py` | 读取 RTK 预先记录的路径，并截取局部路径做发布 |
+| `plot_log_trajectory.py` | 先获取 RTK 的终端 log 数据至 txt 中（格式同 `scripts/log.txt`，不同可修改脚本中的正则表达式），之后运行得到插值之后的 `path.txt`。**这里的 path.txt 要供 rtk_path.py 读取，作为 global path** |

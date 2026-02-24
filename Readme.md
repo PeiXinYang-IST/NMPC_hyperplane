@@ -302,3 +302,89 @@ nmpc_tracker/
 ├── package.xml
 └── README.md
 ```
+
+
+## 系统测试速度映射步骤
+  1.pnc文件夹中修改x和z速度
+  2.开启dds bridge
+  3.开启rtk程序 获取底层速度估计
+  4.开启pnc launch
+  5.从rtk终端打印日志导出，并保存记录文件名为当前pnc发送速度数据
+  6.准备好数据后 送入nihe.py
+      file_map = {
+        '0.4log.txt': 0.4,
+        '0.35log.txt': 0.35,
+        '0.3log.txt': 0.3,
+        '0.25log.txt': 0.25,
+        '0.2log.txt': 0.2,
+        '0.15log.txt': 0.15,
+        '0.1log.txt': 0.1
+    }
+
+## 
+
+
+## 1. 系统输入与架构
+
+系统主要由 `nmpc tracker node` 核心节点组成，输入源分为两部分：
+
+* **定位数据 (RTK):**
+* 接收位置信息：`x`, `y`
+* 接收航向角：`yaw`
+
+* **遥控指令 (Remote Control):**
+* 线速度 $v_x$：目前状态较稳定。
+* 角速度 $v_{yaw}$：**需滤波处理**。当前直接使用 IMU 原始数据（裸数据），存在噪点。
+
+
+---
+
+## 2. 数据预处理
+
+在数据进入控制算法前，需进行映射与过滤：
+
+* **速度映射:** 线速度 $v_x$ 采用线性映射公式：
+
+$$v_{out} = 3.17 \times v_{in} + 0.10$$
+
+
+* **死区处理:** 为防止零点漂移，对角速度 $v_{yaw}$ 设置死区：
+* **死区阈值:** $0.33 \, \text{rad/s}$
+
+
+
+---
+
+## 3. NMPC 调速修改指南
+
+若需调整车辆的运动速度范围，请按以下步骤操作：
+
+### 3.1 代码内部逻辑修改
+
+修改 `dynamic step dist` 相关计算代码，确保 `max_step` 和 `min_step` 与速度对应：
+
+对应node中代码为：
+double dynamic_step_dist = max_step - curve_ratio * (max_step - min_step); 
+    if (dynamic_step_dist < 0.1) dynamic_step_dist = 0.1; 
+
+* $max\_vel = max\_step \times \frac{1}{dt}$
+* $min\_vel = min\_step \times \frac{1}{dt}$
+
+### 3.2 配置文件 (YAML) 修改
+
+1. 修改 `yaml` 文件中的参考速度 `ref_vel` (即 `max_vel`)。
+2. 修改 `yaml` 文件中的最大速度限制（振幅）参数 `max_vel`。
+3. 目前测试其他部分较稳定不要轻易修改
+---
+
+## 4. 性能优化与故障排除
+
+当 **NMPC 跟踪效果较差**（如出现明显震荡或不稳定）时，可尝试以下方案：
+
+* **权重调整:** 修改 `planner.py` 或 `generate.py` 中的各部分权重。
+* **优化策略:** * **减小振荡:** 通常通过 **降低位置跟踪权重** (Position Tracking Weight) 来减少系统的频繁摆动，提高行驶轨迹的平滑度。
+
+## 关于测试PNC是否稳定
+1.可视化中查看前端选择的路径（蓝色路径中选择出的绿色路径）是否较贴合全局轨迹
+2.nmpc的预测轨迹是否贴合前端绿色路径
+3.查看终端中的打印 总时间是否超过30ms 若超过30ms则时间复杂度较高（目前orin上一次循环应为10ms左右）

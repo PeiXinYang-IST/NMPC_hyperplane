@@ -1,10 +1,12 @@
 /**:
   ros__parameters:
+    system:
+      performance_mode: False
     nmpc_config:
-      ref_velocity: 5.0             # 期望巡航速度 (m/s)
+      ref_velocity: 3.0             # 期望巡航速度 (m/s)
       control_loop_ms: 50           # 控制循环周期 (毫秒)
       enable_warm_start: False
-      curvature_threshold: 3.0
+      curvature_threshold: 1.0
       global_curvature_weight: 1.0
 
     safety:
@@ -21,39 +23,23 @@
       fov_half_angle_deg: 100.0     # 机器人前方视野半角 (度)
 
     obstacle_avoidance:
-      base_margin: 1.0              # 基础安全距离/机器人半径 (米)
-
-    astar:
-      resolution: 0.5            # [关键] 0.2m 分辨率，平衡精度与速度
-      grid_padding: 10           # 边界留白，防止搜出地图
-      
-      # --- 搜索阶段 ---
-      heuristic_weight: 5.0      # 加速搜索，比 Dijkstra 快
-      reference_cost_weight: 2.0 # 适度吸附全局路径，允许小范围切弯
-      turning_weight: 2.5        # 强力抑制折线抖动，鼓励走直线
-      history_bias_weight: 0.5   # 保持路径稳定性
-      
-      # --- 平滑阶段 (FEM-Smoother) ---
-      # 这里的逻辑是：既要跟着 A* 走(Data)，又要尽可能圆滑(Curvature)
-      smooth_data_weight: 0.45      # 必须足够大，保证不撞墙
-      smooth_smooth_weight: 0.35    # 负责拉直
-      smooth_curvature_weight: 0.5 # [核心] 负责消除尖角
+      base_margin: 2.0              # 基础安全距离/机器人半径 (米)
 
     robot_limits:
-      max_linear_velocity: 5.0      # 最大线速度限制 (m/s)
+      max_linear_velocity: 3.1      # 最大线速度限制 (m/s)
       min_linear_velocity: 0.0      # 最小线速度限制 (m/s)
       max_angular_velocity: 2.0     # 最大角速度限制 (rad/s)
       min_angular_velocity: -2.0    # 最小角速度限制 (rad/s)
 
     eso:
-      enable: True
+      enable: False
       omega_linear: 10.0
       omega_angular: 10.0
       b0_linear: 1.0
       b0_angular: 1.0
       
     sfc:
-      enable: False
+      enable: True
       robot_radius: 1.0
       search_radius: 5.0
       longitudinal_length: 4.0
@@ -63,8 +49,20 @@
       lookahead_dist: 30.0
       num_samples: 500
       sample_width: 0.1
-      max_width: 15.0
+      max_width: 50.0
       collision_radius: 1.0
       weight_collision: 1000.0
-      weight_offset: 3.0
-      weight_consistency: 2.0
+      weight_offset: 1.0
+      weight_consistency: 4.0
+
+    quintic:
+      weight_lat: 0.2
+      weight_collision: 1000.0
+      weight_lon: 1.0
+      weight_jerk: 0.1
+      num_samples: 30
+      sample_width: 0.4
+      min_lookahead: 2.0
+      max_lookahead: 5.0
+      max_lat_sample: 10.0
+      collision_radius: 0.8

@@ -5,7 +5,6 @@ from launch_ros.actions import Node
 def generate_launch_description():
     acados_lib = '/mnt/c/Users/yang/Downloads/acados/lib'
     gen_code_lib = '/mnt/c/Users/yang/Downloads/Tracker/scripts/c_generated_code'
-    
     config_path = '/mnt/c/Users/yang/Downloads/Tracker/config/parameters.yaml'
     
     python_path = os.environ.get('PYTHONPATH', '')
@@ -33,7 +32,8 @@ def generate_launch_description():
         
         # Python 路径发布节点
         Node(package='nmpc_tracker', executable='path_publisher.py', output='screen', env=env),
-        
+        # Node(package='nmpc_tracker', executable='rtk_path.py', output='screen', env=env),
+
         Node(
     package='rviz2',
     executable='rviz2',

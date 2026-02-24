@@ -17,6 +17,7 @@
 #include <memory>
 #include <algorithm>
 #include <string>
+#include <random>
 #include <Eigen/Dense>
 
 extern "C" {
@@ -96,5 +97,9 @@ private:
     bool path_ok_ = false;
     bool is_first_run_ = true;
     double last_filtered_local_curve_ = 0.0;
+
+    // 速度观测噪声随机数生成器
+    std::mt19937 vel_noise_generator_;
+    std::normal_distribution<double> vel_noise_dist_;
 };
 #endif

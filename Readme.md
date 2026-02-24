@@ -305,24 +305,27 @@ nmpc_tracker/
 
 
 ## 系统测试速度映射步骤
-  1.pnc文件夹中修改x和z速度
-  2.开启dds bridge
-  3.开启rtk程序 获取底层速度估计
-  4.开启pnc launch
-  5.从rtk终端打印日志导出，并保存记录文件名为当前pnc发送速度数据
-  6.准备好数据后 送入nihe.py
-      file_map = {
-        '0.4log.txt': 0.4,
-        '0.35log.txt': 0.35,
-        '0.3log.txt': 0.3,
-        '0.25log.txt': 0.25,
-        '0.2log.txt': 0.2,
-        '0.15log.txt': 0.15,
-        '0.1log.txt': 0.1
-    }
 
-## 
+1. 在 pnc 文件夹中修改 x 和 z 速度
+2. 开启 DDS bridge
+3. 开启 RTK 程序，获取底层速度估计
+4. 开启 PNC launch
+5. 从 RTK 终端打印日志导出，并保存记录，文件名为当前 PNC 发送速度数据
+6. 准备好数据后送入 `nihe.py`
 
+```python
+file_map = {
+    '0.4log.txt': 0.4,
+    '0.35log.txt': 0.35,
+    '0.3log.txt': 0.3,
+    '0.25log.txt': 0.25,
+    '0.2log.txt': 0.2,
+    '0.15log.txt': 0.15,
+    '0.1log.txt': 0.1
+}
+```
+
+---
 
 ## 1. 系统输入与架构
 

@@ -16,8 +16,8 @@ def export_race_model(n_obstacles=5):
     
     # --- 控制变量 (Controls) ---
     ax    = ca.SX.sym('ax')     # 纵向加速度 (m/s^2) - 对应油门/刹车
-    alpha = ca.SX.sym('alpha')  # 角加速度 (rad/s^2) - 对应转向速率
-    control = ca.vertcat(ax, alpha)
+    w     = ca.SX.sym('w')      # 角速度 (rad/s) - 直接控制角速度
+    control = ca.vertcat(ax, w)
 
     # --- 运行时参数 (Runtime Parameters) ---
     # 这些参数在每一帧求解前可以动态更新，无需重新编译
@@ -44,9 +44,9 @@ def export_race_model(n_obstacles=5):
     rhs = ca.vertcat(
         vx * ca.cos(theta), # dx/dt: X轴位移速度
         vx * ca.sin(theta), # dy/dt: Y轴位移速度
-        omega,              # dtheta/dt: 偏航角变化率
+        w,                  # dtheta/dt: 偏航角变化率 = 角速度
         ax,                 # dvx/dt: 加速度
-        alpha               # domega/dt: 角加速度
+        0                   # domega/dt: 角速度不再作为状态更新（直接控制）
     )
     
     model = AcadosModel()
@@ -79,7 +79,7 @@ def setup_ocp(N_horizon=30, Tf=3.0):
     vx = model.x[3]
     omega = model.x[4]
     
-    # 跟踪误差项: [x, y, vx, omega, ax, alpha, 乘向速度项]
+    # 跟踪误差项: [x, y, vx, omega, ax, w, 乘向速度项]
     # vx * omega 项可以惩罚高速急转弯，增加平顺性
     cost_y_expr = ca.vertcat(model.x[0], model.x[1], vx, omega, model.u[0], model.u[1], vx * omega)
     ocp.model.cost_y_expr = cost_y_expr
@@ -87,10 +87,10 @@ def setup_ocp(N_horizon=30, Tf=3.0):
     ocp.model.cost_y_expr_e = ca.vertcat(model.x[0], model.x[1], vx, omega)
     
     # 权重矩阵 W: 对应 cost_y_expr 中每一项的惩罚力度
-    W = np.diag([3.0, 3.0, 1.0, 1.0, 1.0, 1.0, 1.0])
+    W = np.diag([3.0, 3.0, 1.0, 3.0, 1.0, 3.0, 1.0])
     ocp.cost.W = W
     ocp.cost.W_0 = W
-    ocp.cost.W_e = np.diag([5.0, 5.0, 0.1, 0.5]) # 终端权重
+    ocp.cost.W_e = np.diag([5.0, 5.0, 0.1, 5.0]) # 终端权重
     
     # 期望参考值 (Reference): 实际运行时会从外部（如全局路径）更新
     ocp.cost.yref = np.zeros(7)
@@ -99,12 +99,12 @@ def setup_ocp(N_horizon=30, Tf=3.0):
 
     # --- 状态与控制约束 (Bounds) ---
     ocp.constraints.idxbx = np.array([3, 4])   # 针对 vx, omega 设置状态约束
-    ocp.constraints.lbx = np.array([0.0, -2.5]) # 速度下限 0, 最小角速度 -2.5
-    ocp.constraints.ubx = np.array([7.5, 2.5])  # 速度上限 7, 最大角速度 2.5
+    ocp.constraints.lbx = np.array([0.0, -3.15]) # 速度下限 0, 最小角速度 -2.5
+    ocp.constraints.ubx = np.array([7.5, 3.15])  # 速度上限 7, 最大角速度 2.5
     
-    ocp.constraints.idxbu = np.array([0, 1])   # 针对 ax, alpha 设置控制约束
-    ocp.constraints.lbu = np.array([-1.0, -1.0]) # 最大刹车 -1.5, 最大转角速率 -0.75
-    ocp.constraints.ubu = np.array([1.0, 1.0])  # 最大加速 1.5, 最大转角速率 0.75
+    ocp.constraints.idxbu = np.array([0, 1])   # 针对 ax, w 设置控制约束
+    ocp.constraints.lbu = np.array([-1.0, -2.5]) # 最大刹车 -1.0, 最小角速度 -2.5
+    ocp.constraints.ubu = np.array([1.0, 2.5])  # 最大加速 1.0, 最大角速度 2.5
     
     ocp.constraints.x0 = np.zeros(nx) # 初始状态占位
 

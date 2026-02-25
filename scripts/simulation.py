@@ -208,8 +208,14 @@ class SimulationEnv(Node):
         return pts
 
     def cmd_cb(self, msg):
+        # 死区处理 - 角速度 0.3 死区
+        angular_z = msg.angular.z
+        deadzone = 0.3
+        if abs(angular_z) < deadzone:
+            angular_z = 0.0
+
         self.state[3] = msg.linear.x
-        self.state[4] = msg.angular.z
+        self.state[4] = angular_z 
 
     def update_and_publish(self):
         # 1. Ego 运动积分

@@ -3,7 +3,7 @@
     system:
       performance_mode: False
     nmpc_config:
-      ref_velocity: 3.0             # 期望巡航速度 (m/s)
+      ref_velocity: 5.0             # 期望巡航速度 (m/s)
       control_loop_ms: 50           # 控制循环周期 (毫秒)
       enable_warm_start: False
       curvature_threshold: 1.0
@@ -26,7 +26,7 @@
       base_margin: 2.0              # 基础安全距离/机器人半径 (米)
 
     robot_limits:
-      max_linear_velocity: 3.1      # 最大线速度限制 (m/s)
+      max_linear_velocity: 5.1      # 最大线速度限制 (m/s)
       min_linear_velocity: 0.0      # 最小线速度限制 (m/s)
       max_angular_velocity: 2.0     # 最大角速度限制 (rad/s)
       min_angular_velocity: -2.0    # 最小角速度限制 (rad/s)
@@ -39,7 +39,7 @@
       b0_angular: 1.0
       
     sfc:
-      enable: True
+      enable: False
       robot_radius: 1.0
       search_radius: 5.0
       longitudinal_length: 4.0

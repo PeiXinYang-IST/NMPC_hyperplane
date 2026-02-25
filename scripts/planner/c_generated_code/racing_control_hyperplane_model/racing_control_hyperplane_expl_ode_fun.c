@@ -64,11 +64,11 @@ static int casadi_f0(const casadi_real** arg, casadi_real** res, casadi_int* iw,
   a1=sin(a1);
   a0=(a0*a1);
   if (res[0]!=0) res[0][1]=a0;
-  a0=arg[0]? arg[0][4] : 0;
+  a0=arg[1]? arg[1][1] : 0;
   if (res[0]!=0) res[0][2]=a0;
   a0=arg[1]? arg[1][0] : 0;
   if (res[0]!=0) res[0][3]=a0;
-  a0=arg[1]? arg[1][1] : 0;
+  a0=0.;
   if (res[0]!=0) res[0][4]=a0;
   return 0;
 }

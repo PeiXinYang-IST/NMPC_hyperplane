@@ -332,8 +332,8 @@ void NmpcTrackerNode::solve_cycle() {
     // 6.2 动态步长计算 (仅使用全局曲率)
     double total_curve = global_curve_sum;
     double curve_ratio = std::clamp(total_curve / curvature_threshold, 0.0, 1.0);
-    double max_step = 0.3;
-    double min_step = 0.15; 
+    double max_step = 0.5;
+    double min_step = 0.3; 
     double dynamic_step_dist = max_step - curve_ratio * (max_step - min_step); 
     if (dynamic_step_dist < 0.1) dynamic_step_dist = 0.1; 
     
@@ -504,14 +504,22 @@ void NmpcTrackerNode::solve_cycle() {
     if (status == 0) {
         // [Performance] 关闭繁重的字符串格式化和 INFO 日志
 
+        // 获取求解出的控制量（加速度和角速度）
+        double u0[2];
+        ocp_nlp_out_get(conf, dims, out, 0, "u", u0);
+        double u_acc = u0[0];   // 加速度
+        double u_w = u0[1];     // 角速度（直接控制）
+
             snprintf(log_buf, sizeof(log_buf),
-            "TIME[Tot:%.1f Plan:%.1f] Stat:%s Iter:%d V:%.2f W:%.2f ESO[L:%.2f A:%.2f] Crv:%.1f Step:%.2f %s",
+            "TIME[Tot:%.1f Plan:%.1f] Stat:%s Iter:%d V:%.2f W:%.2f Acc:%.3f W_Cmd:%.3f ESO[L:%.2f A:%.2f] Crv:%.1f Step:%.2f %s",
             t_total,
             t_plan,
             plan_status.c_str(),
             qp_iter_sum,
             gv,
             gw,
+            u_acc,
+            u_w,
             dist_acc_lin,
             dist_acc_ang,
             global_curve_sum,
@@ -588,30 +596,30 @@ std::vector<Point2D> NmpcTrackerNode::convert_obs_to_lattice(const std::vector<P
     return out;
 }
 
-void NmpcTrackerNode::publish_command(ocp_nlp_config* conf, ocp_nlp_dims* dims, ocp_nlp_out* out, 
-                                      double dist_lin, double dist_ang) 
+void NmpcTrackerNode::publish_command(ocp_nlp_config* conf, ocp_nlp_dims* dims, ocp_nlp_out* out,
+                                      double dist_lin, double dist_ang)
 {
-    double u0[2]; 
+    double u0[2];
     ocp_nlp_out_get(conf, dims, out, 0, "u", u0);
-    
+
     geometry_msgs::msg::Twist cmd;
     double max_v = this->get_parameter("robot_limits.max_linear_velocity").as_double();
     double min_v = this->get_parameter("robot_limits.min_linear_velocity").as_double();
-    
+
     double b0_lin = this->get_parameter("eso.b0_linear").as_double();
-    double b0_ang = this->get_parameter("eso.b0_angular").as_double();
 
+    // 控制量: [ax, w] - 加速度 + 角速度（直接控制）
     double u_acc_comp = u0[0] - dist_lin / b0_lin;
-    double u_ang_comp = u0[1] - dist_ang / b0_ang;
+    double w_cmd = u0[1]; // 角速度直接输出（无积分）
 
+    // 线速度通过积分加速度得到
     double v_cmd = cur_x_[3] + u_acc_comp * DT;
-    double w_cmd = cur_x_[4] + u_ang_comp * DT;
 
     cmd.linear.x = std::clamp(v_cmd, min_v, max_v);
     cmd.angular.z = std::clamp(w_cmd, -2.5, 2.5);
 
     last_cmd_acc_ = u_acc_comp;
-    last_cmd_w_acc_ = u_ang_comp;
+    last_cmd_w_acc_ = 0.0; // 角速度直接控制，无ESO补偿
 
     pub_cmd_->publish(cmd);
 }

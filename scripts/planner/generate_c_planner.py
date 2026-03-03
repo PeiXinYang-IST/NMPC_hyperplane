@@ -87,10 +87,10 @@ def setup_ocp(N_horizon=30, Tf=3.0):
     ocp.model.cost_y_expr_e = ca.vertcat(model.x[0], model.x[1], vx, omega)
     
     # 权重矩阵 W: 对应 cost_y_expr 中每一项的惩罚力度
-    W = np.diag([3.0, 3.0, 1.0, 3.0, 1.0, 3.0, 1.0])
+    W = np.diag([3.0, 3.0, 1.0, 10.0, 1.0, 3.0, 1.0])
     ocp.cost.W = W
     ocp.cost.W_0 = W
-    ocp.cost.W_e = np.diag([5.0, 5.0, 0.1, 5.0]) # 终端权重
+    ocp.cost.W_e = np.diag([5.0, 5.0, 0.1, 10.0]) # 终端权重
     
     # 期望参考值 (Reference): 实际运行时会从外部（如全局路径）更新
     ocp.cost.yref = np.zeros(7)

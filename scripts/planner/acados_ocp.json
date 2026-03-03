@@ -188,7 +188,7 @@
                 0.0,
                 0.0,
                 0.0,
-                3.0,
+                10.0,
                 0.0,
                 0.0,
                 0.0
@@ -253,7 +253,7 @@
                 0.0,
                 0.0,
                 0.0,
-                3.0,
+                10.0,
                 0.0,
                 0.0,
                 0.0
@@ -309,7 +309,7 @@
                 0.0,
                 0.0,
                 0.0,
-                5.0
+                10.0
             ]
         ],
         "Zl": [],
@@ -431,7 +431,7 @@
         "racing_control_hyperplane_cost/racing_control_hyperplane_cost_y_e_fun_jac_ut_xt.c",
         "racing_control_hyperplane_cost/racing_control_hyperplane_cost_y_e_hess.c"
     ],
-    "hash": "95e436353649503c4d29d042cea3e8f3",
+    "hash": "9e7d4acd8042fa8f603bf6f6688fa77d",
     "model": {
         "con_h_expr": [],
         "con_h_expr_0": [],

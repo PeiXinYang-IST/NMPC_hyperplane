@@ -140,7 +140,7 @@ void NmpcTrackerNode::solve_cycle() {
 
     // 避障参数 (计算膨胀后的 Margin)
     double base_margin = this->get_parameter("obstacle_avoidance.base_margin").as_double();
-    double search_margin = base_margin * 1.2; 
+    double search_margin = base_margin * 1.0; 
 
     // =========================================================
     // 2. ESO (扩张状态观测器) 更新
@@ -277,53 +277,72 @@ void NmpcTrackerNode::solve_cycle() {
     }
 
     // =========================================================
-    // 6. 曲率计算与动态步长 (Adaptive Step Size)
+    // 6. 曲率计算与动态步长 (Adaptive Step Size) - 使用 Lattice Guide Path
     // =========================================================
     double curvature_threshold = this->get_parameter("nmpc_config.curvature_threshold").as_double();
     double global_curve_weight = this->get_parameter("nmpc_config.global_curvature_weight").as_double();
 
-    // 6.1 全局曲率 (前瞻未来路段)
+    // 6.1 Lattice路径曲率 (前瞻未来路段)
     double global_curve_sum = 0.0;
     std::vector<geometry_msgs::msg::Point> curve_viz_pts;
     std::vector<std_msgs::msg::ColorRGBA> curve_viz_cols;
-    
-    double raw_path_res = 0.1; 
-    double stride_dist = 0.5;  
-    int stride_step = std::max(1, (int)(stride_dist / raw_path_res)); 
-    double predicted_path_len = target_ref_vel * N_HORIZON * DT; 
+
+    // 使用 guide_path 的分辨率 (lattice.path_resolution = 0.2)
+    double lattice_path_res = this->get_parameter("lattice.path_resolution").as_double();
+    double stride_dist = 0.5;
+    int stride_step = std::max(1, (int)(stride_dist / lattice_path_res));
+
+    // 找到 guide_path 上距离机器人最近的点索引
+    int guide_closest_idx = 0;
+    if (!guide_path.empty()) {
+        double min_dist = 1e9;
+        for (size_t i = 0; i < guide_path.size(); ++i) {
+            double d = std::hypot(guide_path[i].x - gx, guide_path[i].y - gy);
+            if (d < min_dist) {
+                min_dist = d;
+                guide_closest_idx = i;
+            }
+        }
+    }
+
+    double predicted_path_len = target_ref_vel * N_HORIZON * DT;
     double check_dist = std::max(15.0, predicted_path_len * 1.2);
-    int max_check_steps = static_cast<int>(check_dist / raw_path_res);
-    int end_scan_idx = std::min((int)full_path_.poses.size() - 1 - stride_step, closest_idx + max_check_steps);
+    int max_check_steps = static_cast<int>(check_dist / lattice_path_res);
 
-    if (end_scan_idx > closest_idx) {
-        for (int k = closest_idx; k < end_scan_idx; k += stride_step) {
-            // [Performance] 可视化点填充只在非性能模式下进行
-            if (!perf_mode) {
-                geometry_msgs::msg::Point pt;
-                pt.x = full_path_.poses[k].pose.position.x; pt.y = full_path_.poses[k].pose.position.y; pt.z = 0.2; 
-                curve_viz_pts.push_back(pt);
-            }
+    // 使用 guide_path 而不是 full_path_
+    if (!guide_path.empty()) {
+        int end_scan_idx = std::min((int)guide_path.size() - 1 - stride_step, guide_closest_idx + max_check_steps);
 
-            double diff = 0.0;
-            // 核心逻辑计算必须保留
-            if (k > closest_idx) {
-                double dx1 = full_path_.poses[k + stride_step].pose.position.x - full_path_.poses[k].pose.position.x;
-                double dy1 = full_path_.poses[k + stride_step].pose.position.y - full_path_.poses[k].pose.position.y;
-                double yaw1 = std::atan2(dy1, dx1);
+        if (end_scan_idx > guide_closest_idx) {
+            for (int k = guide_closest_idx; k < end_scan_idx; k += stride_step) {
+                // [Performance] 可视化点填充只在非性能模式下进行
+                if (!perf_mode) {
+                    geometry_msgs::msg::Point pt;
+                    pt.x = guide_path[k].x; pt.y = guide_path[k].y; pt.z = 0.2;
+                    curve_viz_pts.push_back(pt);
+                }
 
-                double dx0 = full_path_.poses[k].pose.position.x - full_path_.poses[k - stride_step].pose.position.x;
-                double dy0 = full_path_.poses[k].pose.position.y - full_path_.poses[k - stride_step].pose.position.y;
-                double yaw0 = std::atan2(dy0, dx0);
-                diff = std::abs(unwrap_yaw(yaw1, yaw0) - yaw0);
-                global_curve_sum += diff;
-            }
+                double diff = 0.0;
+                // 核心逻辑计算必须保留
+                if (k > guide_closest_idx) {
+                    double dx1 = guide_path[k + stride_step].x - guide_path[k].x;
+                    double dy1 = guide_path[k + stride_step].y - guide_path[k].y;
+                    double yaw1 = std::atan2(dy1, dx1);
 
-            // [Performance] 颜色计算
-            if (!perf_mode) {
-                std_msgs::msg::ColorRGBA col; col.a = 1.0;
-                double ratio = std::clamp(diff / 0.3, 0.0, 1.0);
-                col.r = ratio; col.g = 1.0 - ratio; col.b = 0.0;
-                curve_viz_cols.push_back(col);
+                    double dx0 = guide_path[k].x - guide_path[k - stride_step].x;
+                    double dy0 = guide_path[k].y - guide_path[k - stride_step].y;
+                    double yaw0 = std::atan2(dy0, dx0);
+                    diff = std::abs(unwrap_yaw(yaw1, yaw0) - yaw0);
+                    global_curve_sum += diff;
+                }
+
+                // [Performance] 颜色计算
+                if (!perf_mode) {
+                    std_msgs::msg::ColorRGBA col; col.a = 1.0;
+                    double ratio = std::clamp(diff / 0.3, 0.0, 1.0);
+                    col.r = ratio; col.g = 1.0 - ratio; col.b = 0.0;
+                    curve_viz_cols.push_back(col);
+                }
             }
         }
     }
@@ -332,8 +351,8 @@ void NmpcTrackerNode::solve_cycle() {
     // 6.2 动态步长计算 (仅使用全局曲率)
     double total_curve = global_curve_sum;
     double curve_ratio = std::clamp(total_curve / curvature_threshold, 0.0, 1.0);
-    double max_step = 0.5;
-    double min_step = 0.3; 
+    double max_step = 0.3;
+    double min_step = 0.15; 
     double dynamic_step_dist = max_step - curve_ratio * (max_step - min_step); 
     if (dynamic_step_dist < 0.1) dynamic_step_dist = 0.1; 
     
@@ -507,25 +526,31 @@ void NmpcTrackerNode::solve_cycle() {
         // 获取求解出的控制量（加速度和角速度）
         double u0[2];
         ocp_nlp_out_get(conf, dims, out, 0, "u", u0);
-        double u_acc = u0[0];   // 加速度
-        double u_w = u0[1];     // 角速度（直接控制）
+        double u_acc_raw = u0[0];   // 加速度（原始）
+        double u_w = u0[1];         // 角速度（直接控制）
 
+        // ESO 补偿后的加速度
+        double b0_lin = this->get_parameter("eso.b0_linear").as_double();
+        double u_acc_comp = u_acc_raw - dist_acc_lin / b0_lin;
+
+        // 仅在非性能模式下输出详细日志
+        if (!perf_mode) {
             snprintf(log_buf, sizeof(log_buf),
-            "TIME[Tot:%.1f Plan:%.1f] Stat:%s Iter:%d V:%.2f W:%.2f Acc:%.3f W_Cmd:%.3f ESO[L:%.2f A:%.2f] Crv:%.1f Step:%.2f %s",
-            t_total,
-            t_plan,
-            plan_status.c_str(),
-            qp_iter_sum,
-            gv,
-            gw,
-            u_acc,
-            u_w,
-            dist_acc_lin,
-            dist_acc_ang,
-            global_curve_sum,
-            dynamic_step_dist,
-            is_emergency ? "[RECOVERY]" : "");
+                "TIME[Tot:%.1f Plan:%.1f] Stat:%s Iter:%d V:%.2f W:%.2f "
+                "Acc_Raw:%.3f Acc_Comp:%.3f ESO:%.3f CTE:%.2f %s",
+                t_total,
+                t_plan,
+                plan_status.c_str(),
+                qp_iter_sum,
+                gv,
+                gw,
+                u_acc_raw,      // 补偿前
+                u_acc_comp,     // 补偿后
+                dist_acc_lin,   // ESO估计的扰动
+                current_cte,
+                is_emergency ? "[RECOVERY]" : "");
             RCLCPP_INFO(this->get_logger(), "%s", log_buf);
+        }
         
 
         publish_command(conf, dims, out, dist_acc_lin, dist_acc_ang);
@@ -607,10 +632,16 @@ void NmpcTrackerNode::publish_command(ocp_nlp_config* conf, ocp_nlp_dims* dims, 
     double min_v = this->get_parameter("robot_limits.min_linear_velocity").as_double();
 
     double b0_lin = this->get_parameter("eso.b0_linear").as_double();
+    double b0_ang = this->get_parameter("eso.b0_angular").as_double();
 
     // 控制量: [ax, w] - 加速度 + 角速度（直接控制）
     double u_acc_comp = u0[0] - dist_lin / b0_lin;
-    double w_cmd = u0[1]; // 角速度直接输出（无积分）
+    double w_cmd_raw = u0[1];
+    // 角速度ESO补偿
+    double w_cmd = w_cmd_raw - dist_ang / b0_ang;
+
+    // 计算角加速度（用于ESO更新）
+    double w_acc = (w_cmd - last_w_cmd_) / DT;
 
     // 线速度通过积分加速度得到
     double v_cmd = cur_x_[3] + u_acc_comp * DT;
@@ -619,9 +650,20 @@ void NmpcTrackerNode::publish_command(ocp_nlp_config* conf, ocp_nlp_dims* dims, 
     cmd.angular.z = std::clamp(w_cmd, -2.5, 2.5);
 
     last_cmd_acc_ = u_acc_comp;
-    last_cmd_w_acc_ = 0.0; // 角速度直接控制，无ESO补偿
+    last_cmd_w_acc_ = w_acc;
+    last_w_cmd_ = w_cmd;
 
     pub_cmd_->publish(cmd);
+
+    // 发布 ESO 诊断数据 (用于外部分析)
+    // 数据格式: [u_acc_raw, u_acc_comp, dist_lin, v_cmd, current_velocity]
+    std_msgs::msg::Float32MultiArray eso_diag;
+    eso_diag.data.push_back(u0[0]);       // 原始加速度
+    eso_diag.data.push_back(u_acc_comp);  // 补偿后加速度
+    eso_diag.data.push_back(dist_lin);     // ESO估计扰动
+    eso_diag.data.push_back(v_cmd);        // 命令速度
+    eso_diag.data.push_back(cur_x_[3]);     // 当前实际速度
+    pub_eso_diag_->publish(eso_diag);
 }
 
 std::vector<Point> NmpcTrackerNode::get_all_obstacle_points() {
@@ -861,6 +903,7 @@ void NmpcTrackerNode::setup_ros_interfaces() {
     pub_cmd_ = create_publisher<geometry_msgs::msg::Twist>("/cmd_vel", 10);
     pub_viz_ = create_publisher<visualization_msgs::msg::MarkerArray>("/nmpc_viz", 10);
     pub_solve_time_ = create_publisher<std_msgs::msg::Float32>("/nmpc/solve_time", 10);
+    pub_eso_diag_ = create_publisher<std_msgs::msg::Float32MultiArray>("/nmpc/eso_diag", 10);
     
     int ms = this->get_parameter("nmpc_config.control_loop_ms").as_int();
     timer_ = create_wall_timer(std::chrono::milliseconds(ms), std::bind(&NmpcTrackerNode::solve_cycle, this));

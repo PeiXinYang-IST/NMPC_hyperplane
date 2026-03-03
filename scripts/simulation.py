@@ -64,6 +64,19 @@ class SimulationEnv(Node):
         self.current_s = 0.0 # 当前在赛道上的里程 s
         self.dt = 0.05
         self.timer = self.create_timer(self.dt, self.update_and_publish)
+
+        # --- 角速度低通滤波 ---
+        self.w_filtered = 0.0  # 滤波后的角速度
+        self.w_alpha = 0.3     # 滤波系数 (0-1, 越小越平滑)
+
+        # --- 时间记录 (用于扰动) ---
+        self.start_time = self.get_clock().now().nanoseconds / 1e9
+
+        # --- 速度扰动配置 ---
+        self.disturbance_intervals = [
+            {'start': 0.0, 'end': 5.0, 'scale': 0.9},   # 10-15s: 0.9倍
+            {'start': 5.0, 'end': 10.0, 'scale': 1.2},  # 15-20s: 1.2倍
+        ]
         
         # --- 生成与 Path Publisher 完全一致的赛道 ---
         self.road_width = 8.0
@@ -102,10 +115,113 @@ class SimulationEnv(Node):
 
         # 动态 NPC
         self.traffic_vehicles = [
-            {'id': 1, 's': 20.0, 'speed': 3.0, 'offset': 2.0, 'width': 1.8, 'length': 4.5}, 
+            {'id': 1, 's': 20.0, 'speed': 3.0, 'offset': 2.0, 'width': 1.8, 'length': 4.5},
             # 这个车会在两个直角弯之间慢慢开
-            {'id': 2, 's': 60.0, 'speed': 2.0, 'offset': -2.0,  'width': 1.8, 'length': 4.0}, 
+            {'id': 2, 's': 60.0, 'speed': 2.0, 'offset': -2.0,  'width': 1.8, 'length': 4.0},
         ]
+
+        # ==========================================
+        # ESO 效果量化记录
+        # ==========================================
+        self.time_history = []
+        self.cmd_vel_history = []      # 命令速度
+        self.real_vel_history = []     # 实际速度（扰动后）
+        self.velocity_scale_history = [] # 当前扰动系数
+        self.position_history = []      # 位置历史用于计算路径跟踪误差
+        self.path_x_history = []       # 参考路径x
+        self.path_y_history = []       # 参考路径y
+        self.total_runtime = 0.0
+        self.is_finished = False
+
+    def print_eso_metrics(self):
+        """打印ESO效果量化指标"""
+        if len(self.cmd_vel_history) < 10:
+            return
+
+        cmd_vel = np.array(self.cmd_vel_history)
+        real_vel = np.array(self.real_vel_history)
+        velocity_scale = np.array(self.velocity_scale_history)
+
+        # 速度跟踪误差
+        velocity_error = cmd_vel - real_vel
+
+        # 整体统计
+        print("\n" + "="*60)
+        print("              ESO 效果量化评估报告")
+        print("="*60)
+        print(f"总运行时间: {self.total_runtime:.2f} s")
+        print(f"采样点数: {len(self.cmd_vel_history)}")
+        print()
+
+        # 1. 速度跟踪误差统计
+        print("【速度跟踪误差】(命令速度 - 实际速度)")
+        print(f"  平均绝对误差 (MAE):  {np.mean(np.abs(velocity_error)):.4f} m/s")
+        print(f"  均方根误差 (RMSE):   {np.sqrt(np.mean(velocity_error**2)):.4f} m/s")
+        print(f"  最大误差:            {np.max(np.abs(velocity_error)):.4f} m/s")
+        print(f"  误差标准差:          {np.std(velocity_error):.4f} m/s")
+        print()
+
+        # 2. 扰动期间 vs 无扰动期间对比
+        # 找出扰动区间
+        disturbance_mask = velocity_scale != 1.0
+        if np.any(disturbance_mask):
+            print("【扰动期间 vs 无扰动期间对比】")
+            # 无扰动期间
+            clean_error = velocity_error[~disturbance_mask]
+            # 扰动期间
+            disturb_error = velocity_error[disturbance_mask]
+
+            print(f"  无扰动期间:")
+            print(f"    MAE:  {np.mean(np.abs(clean_error)):.4f} m/s")
+            print(f"    RMSE: {np.sqrt(np.mean(clean_error**2)):.4f} m/s")
+
+            print(f"  扰动期间:")
+            print(f"    MAE:  {np.mean(np.abs(disturb_error)):.4f} m/s")
+            print(f"    RMSE: {np.sqrt(np.mean(disturb_error**2)):.4f} m/s")
+            print()
+
+        # 3. CTE (Cross-Track Error) 路径跟踪误差
+        if len(self.position_history) > 0 and len(self.path_x_history) > 0:
+            ctes = []
+            for i in range(len(self.position_history)):
+                px, py = self.position_history[i]
+                # 找最近的参考路径点
+                if i < len(self.path_x_history):
+                    rx, ry = self.path_x_history[i], self.path_y_history[i]
+                    cte = np.sqrt((px-rx)**2 + (py-ry)**2)
+                    ctes.append(cte)
+
+            if ctes:
+                print("【路径跟踪误差 (CTE)】")
+                print(f"  平均 CTE: {np.mean(ctes):.4f} m")
+                print(f"  最大 CTE: {np.max(ctes):.4f} m")
+                print(f"  CTE 标准差: {np.std(ctes):.4f} m")
+                print()
+
+        print("="*60)
+
+        # 保存数据到文件供后续分析
+        self.save_data()
+
+    def save_data(self):
+        """保存数据到文件"""
+        import os
+        data_dir = os.path.expanduser("~/Tracker_eval_data")
+        os.makedirs(data_dir, exist_ok=True)
+
+        import datetime
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = os.path.join(data_dir, f"eso_eval_{timestamp}.npz")
+
+        np.savez(filename,
+            time=np.array(self.time_history),
+            cmd_vel=np.array(self.cmd_vel_history),
+            real_vel=np.array(self.real_vel_history),
+            velocity_scale=np.array(self.velocity_scale_history),
+            path_x=np.array(self.path_x_history),
+            path_y=np.array(self.path_y_history)
+        )
+        print(f"数据已保存到: {filename}")
 
     def generate_complex_track_data(self):
         """ 必须与 path_publisher.py 保持完全一致 """
@@ -214,15 +330,39 @@ class SimulationEnv(Node):
         if abs(angular_z) < deadzone:
             angular_z = 0.0
 
-        self.state[3] = msg.linear.x
-        self.state[4] = angular_z 
+        # 获取当前运行时间
+        current_time = self.get_clock().now().nanoseconds / 1e9 - self.start_time
+        self.total_runtime = current_time
+
+        # 应用速度扰动
+        velocity_scale = 1.0
+        for dist in self.disturbance_intervals:
+            if dist['start'] <= current_time < dist['end']:
+                velocity_scale = dist['scale']
+                break
+
+        # 记录ESO效果数据
+        cmd_vel = msg.linear.x
+        real_vel = cmd_vel * velocity_scale
+
+        self.time_history.append(current_time)
+        self.cmd_vel_history.append(cmd_vel)
+        self.real_vel_history.append(real_vel)
+        self.velocity_scale_history.append(velocity_scale)
+
+        # 应用扰动后的速度
+        self.state[3] = real_vel
+        self.state[4] = angular_z
 
     def update_and_publish(self):
         # 1. Ego 运动积分
         self.state[0] += self.state[3] * np.cos(self.state[2]) * self.dt
         self.state[1] += self.state[3] * np.sin(self.state[2]) * self.dt
         self.state[2] += self.state[4] * self.dt
-        
+
+        # 记录位置用于CTE计算
+        self.position_history.append((self.state[0], self.state[1]))
+
         # 更新当前的 s (粗略估计，用于生成周边环境)
         # 这里为了效率，直接计算离最近路径点的距离更新 s，或者直接利用里程计反推
         # 简单方法：寻找最近的 track point 索引
@@ -230,8 +370,16 @@ class SimulationEnv(Node):
         current_idx = np.argmin(dists) # 性能警告：如果 track 太长，全量搜索会慢。
         # 优化：只在上次索引附近搜索。但为了代码稳健性，暂用全量搜索（numpy很快）
         # 对于 75000 个点，argmin 大约耗时 1-2ms，可以接受
-        
+
         self.current_s = self.track_data[current_idx, 3]
+
+        # 记录参考路径点用于CTE计算
+        if current_idx < len(self.track_data):
+            self.path_x_history.append(self.track_data[current_idx, 0])
+            self.path_y_history.append(self.track_data[current_idx, 1])
+
+        # 检查是否到达终点（简单判定：跑了超过一定距离或手动Ctrl+C）
+        # 这里不做自动停止，让用户手动停止后打印统计
 
         # 2. 动态环境更新
         current_obstacles_points = []
@@ -297,12 +445,31 @@ class SimulationEnv(Node):
             pc_msg = pc2.create_cloud_xyz32(odom.header, visible_points)
             self.pub_cloud.publish(pc_msg)
 
+import signal
+import sys
+
+def signal_handler(_sig, _frame):
+    print("\n\n=== 检测到 Ctrl+C，正在打印统计信息 ===")
+    if 'node' in globals():
+        node.print_eso_metrics()
+    sys.exit(0)
+
 def main():
+    global node
     rclpy.init()
+
+    # 注册信号处理器
+    signal.signal(signal.SIGINT, signal_handler)
+
     node = SimulationEnv()
-    rclpy.spin(node)
-    node.destroy_node()
-    rclpy.shutdown()
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        node.print_eso_metrics()
+        node.destroy_node()
+        rclpy.shutdown()
 
 if __name__ == '__main__':
     main()

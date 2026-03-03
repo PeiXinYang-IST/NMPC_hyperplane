@@ -7,6 +7,7 @@
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <geometry_msgs/msg/twist.hpp>
 #include <std_msgs/msg/float32.hpp>
+#include <std_msgs/msg/float32_multi_array.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 #include <tf2/utils.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
@@ -83,15 +84,18 @@ private:
     rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr pub_cmd_;
     rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_viz_;
     rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr pub_solve_time_;
+    rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr pub_eso_diag_;  // ESO诊断数据
     rclcpp::TimerBase::SharedPtr timer_;
 
     std::mutex cluster_mutex_;
     std::map<int, std::vector<Point>> current_clusters_;
     std::map<std::string, std::pair<double, double>> prev_normal_map_;
     std::vector<Point> last_guide_path_;
-    double last_cmd_acc_ = 0.0;   
-    double last_cmd_w_acc_ = 0.0; 
-    double cur_x_[5]; 
+    double last_cmd_acc_ = 0.0;
+    double last_cmd_w_acc_ = 0.0;
+    double last_w_cmd_ = 0.0;  // 上一时刻角速度命令（用于计算角加速度） 
+    double cur_x_[3];  // 状态量: [x, y, theta]
+    double cur_velocity_ = 0.0;  // 当前线速度 (从 odom 获取)
     nav_msgs::msg::Path full_path_;
     bool odom_ok_ = false;
     bool path_ok_ = false;

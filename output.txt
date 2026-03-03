@@ -1,0 +1,435 @@
+[INFO] [launch]: All log files can be found below /root/.ros/log/2026-03-03-13-26-00-174386-zijin-17544
+[INFO] [launch]: Default logging verbosity is set to INFO
+[INFO] [nmpc_node-1]: process started with pid [17545]
+[INFO] [simulation.py-2]: process started with pid [17547]
+[INFO] [path_publisher.py-3]: process started with pid [17549]
+[INFO] [rviz2-4]: process started with pid [17551]
+[nmpc_node-1] [INFO] [1772515560.298723767] [nmpc_node]: NMPC Tracker Ready. [Ref Path Visualization: Pillars]
+[simulation.py-2] [INFO] [1772515560.620326357] [simulation_env]: Track Generated. Total Length: 16474.80m
+[path_publisher.py-3] [INFO] [1772515560.680993759] [global_path_publisher]: Local Window Path Publisher Initialized.
+[nmpc_node-1] [INFO] [1772515560.763237349] [nmpc_node]: TIME[Tot:8.1 Plan:6.6] Stat:Lattice Iter:10 V:0.00 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.00 
+[nmpc_node-1] [INFO] [1772515560.808423696] [nmpc_node]: TIME[Tot:7.0 Plan:6.6] Stat:Lattice Iter:10 V:0.00 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.00 
+[nmpc_node-1] [INFO] [1772515560.853354068] [nmpc_node]: TIME[Tot:7.0 Plan:6.4] Stat:Lattice Iter:10 V:0.09 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.00 
+[nmpc_node-1] [INFO] [1772515560.897770775] [nmpc_node]: TIME[Tot:6.7 Plan:5.8] Stat:Lattice Iter:10 V:0.09 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515560.942730122] [nmpc_node]: TIME[Tot:6.4 Plan:5.7] Stat:Lattice Iter:10 V:0.17 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515560.986232409] [nmpc_node]: TIME[Tot:5.3 Plan:4.9] Stat:Lattice Iter:9 V:0.24 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.03 
+[nmpc_node-1] [INFO] [1772515561.032780780] [nmpc_node]: TIME[Tot:6.8 Plan:5.9] Stat:Lattice Iter:9 V:0.31 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.05 
+[nmpc_node-1] [INFO] [1772515561.076219770] [nmpc_node]: TIME[Tot:5.2 Plan:4.8] Stat:Lattice Iter:8 V:0.37 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515561.122880549] [nmpc_node]: TIME[Tot:5.6 Plan:5.2] Stat:Lattice Iter:8 V:0.42 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515561.168283092] [nmpc_node]: TIME[Tot:6.1 Plan:5.6] Stat:Lattice Iter:8 V:0.47 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.01 
+[rviz2-4] [INFO] [1772515561.197866501] [rviz2]: Stereo is NOT SUPPORTED
+[rviz2-4] [INFO] [1772515561.198013164] [rviz2]: OpenGl version: 4.2 (GLSL 4.2)
+[nmpc_node-1] [INFO] [1772515561.212390739] [nmpc_node]: TIME[Tot:5.2 Plan:4.9] Stat:Lattice Iter:7 V:0.51 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.03 
+[rviz2-4] [INFO] [1772515561.225242744] [rviz2]: Stereo is NOT SUPPORTED
+[nmpc_node-1] [INFO] [1772515561.260642392] [nmpc_node]: TIME[Tot:5.6 Plan:5.2] Stat:Lattice Iter:7 V:0.51 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.03 
+[nmpc_node-1] [INFO] [1772515561.306258616] [nmpc_node]: TIME[Tot:5.7 Plan:5.3] Stat:Lattice Iter:7 V:0.55 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515561.351021045] [nmpc_node]: TIME[Tot:5.3 Plan:5.0] Stat:Lattice Iter:7 V:0.55 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515561.395959556] [nmpc_node]: TIME[Tot:5.2 Plan:4.9] Stat:Lattice Iter:7 V:0.59 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515561.441620408] [nmpc_node]: TIME[Tot:6.0 Plan:5.5] Stat:Lattice Iter:7 V:0.62 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.05 
+[nmpc_node-1] [INFO] [1772515561.486050684] [nmpc_node]: TIME[Tot:5.7 Plan:5.2] Stat:Lattice Iter:7 V:0.65 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515561.530599450] [nmpc_node]: TIME[Tot:5.3 Plan:5.0] Stat:Lattice Iter:7 V:0.67 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515561.575685874] [nmpc_node]: TIME[Tot:5.3 Plan:4.9] Stat:Lattice Iter:7 V:0.69 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.05 
+[nmpc_node-1] [INFO] [1772515561.622122994] [nmpc_node]: TIME[Tot:5.4 Plan:5.0] Stat:Lattice Iter:7 V:0.71 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515561.667818865] [nmpc_node]: TIME[Tot:6.1 Plan:5.8] Stat:Lattice Iter:7 V:0.73 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515561.711919030] [nmpc_node]: TIME[Tot:5.3 Plan:5.0] Stat:Lattice Iter:7 V:0.75 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515561.761205026] [nmpc_node]: TIME[Tot:6.0 Plan:5.5] Stat:Lattice Iter:7 V:0.75 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515561.805517990] [nmpc_node]: TIME[Tot:5.3 Plan:4.9] Stat:Lattice Iter:7 V:0.76 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.00 
+[nmpc_node-1] [INFO] [1772515561.851374464] [nmpc_node]: TIME[Tot:6.2 Plan:5.7] Stat:Lattice Iter:7 V:0.76 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515561.895788572] [nmpc_node]: TIME[Tot:5.6 Plan:5.2] Stat:Lattice Iter:7 V:0.78 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515561.940468410] [nmpc_node]: TIME[Tot:5.4 Plan:4.9] Stat:Lattice Iter:7 V:0.79 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515561.985580543] [nmpc_node]: TIME[Tot:5.7 Plan:5.4] Stat:Lattice Iter:7 V:0.80 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.05 
+[nmpc_node-1] [INFO] [1772515562.030377606] [nmpc_node]: TIME[Tot:5.5 Plan:5.0] Stat:Lattice Iter:7 V:0.81 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.00 
+[nmpc_node-1] [INFO] [1772515562.075389928] [nmpc_node]: TIME[Tot:5.5 Plan:5.1] Stat:Lattice Iter:7 V:0.82 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515562.121797550] [nmpc_node]: TIME[Tot:5.6 Plan:5.3] Stat:Lattice Iter:7 V:0.83 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515562.166383046] [nmpc_node]: TIME[Tot:5.3 Plan:4.9] Stat:Lattice Iter:7 V:0.84 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515562.211329630] [nmpc_node]: TIME[Tot:5.2 Plan:4.8] Stat:Lattice Iter:7 V:0.84 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515562.259947957] [nmpc_node]: TIME[Tot:5.3 Plan:4.9] Stat:Lattice Iter:7 V:0.84 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515562.304837546] [nmpc_node]: TIME[Tot:5.3 Plan:4.9] Stat:Lattice Iter:7 V:0.85 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.00 
+[nmpc_node-1] [INFO] [1772515562.349778430] [nmpc_node]: TIME[Tot:5.3 Plan:4.9] Stat:Lattice Iter:7 V:0.85 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.05 
+[nmpc_node-1] [INFO] [1772515562.395200623] [nmpc_node]: TIME[Tot:5.8 Plan:5.4] Stat:Lattice Iter:7 V:0.85 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515562.440589375] [nmpc_node]: TIME[Tot:5.9 Plan:5.4] Stat:Lattice Iter:7 V:0.86 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.03 
+[nmpc_node-1] [INFO] [1772515562.486089103] [nmpc_node]: TIME[Tot:5.3 Plan:4.9] Stat:Lattice Iter:7 V:0.86 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.03 
+[nmpc_node-1] [INFO] [1772515562.529612961] [nmpc_node]: TIME[Tot:5.3 Plan:4.9] Stat:Lattice Iter:7 V:0.87 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515562.574689465] [nmpc_node]: TIME[Tot:5.2 Plan:4.9] Stat:Lattice Iter:7 V:0.87 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515562.621019412] [nmpc_node]: TIME[Tot:5.4 Plan:5.0] Stat:Lattice Iter:7 V:0.87 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515562.665866917] [nmpc_node]: TIME[Tot:5.3 Plan:4.9] Stat:Lattice Iter:7 V:0.87 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.05 
+[nmpc_node-1] [INFO] [1772515562.710802214] [nmpc_node]: TIME[Tot:5.2 Plan:4.9] Stat:Lattice Iter:7 V:0.88 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515562.759760630] [nmpc_node]: TIME[Tot:5.6 Plan:5.2] Stat:Lattice Iter:7 V:0.88 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515562.804958535] [nmpc_node]: TIME[Tot:5.8 Plan:5.4] Stat:Lattice Iter:7 V:0.88 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515562.850269718] [nmpc_node]: TIME[Tot:6.1 Plan:5.3] Stat:Lattice Iter:7 V:0.88 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515562.894374317] [nmpc_node]: TIME[Tot:5.3 Plan:4.9] Stat:Lattice Iter:7 V:0.88 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515562.939140001] [nmpc_node]: TIME[Tot:5.2 Plan:4.8] Stat:Lattice Iter:7 V:0.88 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.03 
+[nmpc_node-1] [INFO] [1772515562.984313360] [nmpc_node]: TIME[Tot:5.3 Plan:5.0] Stat:Lattice Iter:7 V:0.89 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515563.029865280] [nmpc_node]: TIME[Tot:6.1 Plan:5.6] Stat:Lattice Iter:7 V:0.89 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515563.074741336] [nmpc_node]: TIME[Tot:5.9 Plan:5.6] Stat:Lattice Iter:7 V:0.89 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.00 
+[nmpc_node-1] [INFO] [1772515563.120932151] [nmpc_node]: TIME[Tot:5.8 Plan:5.5] Stat:Lattice Iter:7 V:0.89 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.05 
+[nmpc_node-1] [INFO] [1772515563.165399892] [nmpc_node]: TIME[Tot:5.4 Plan:4.9] Stat:Lattice Iter:7 V:0.89 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515563.210634050] [nmpc_node]: TIME[Tot:5.4 Plan:5.0] Stat:Lattice Iter:7 V:0.89 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515563.259269296] [nmpc_node]: TIME[Tot:5.6 Plan:5.3] Stat:Lattice Iter:7 V:0.89 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515563.304221395] [nmpc_node]: TIME[Tot:5.7 Plan:5.3] Stat:Lattice Iter:7 V:0.89 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515563.349030212] [nmpc_node]: TIME[Tot:5.3 Plan:4.9] Stat:Lattice Iter:7 V:0.89 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515563.394545680] [nmpc_node]: TIME[Tot:5.8 Plan:5.2] Stat:Lattice Iter:7 V:0.89 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.03 
+[nmpc_node-1] [INFO] [1772515563.439354848] [nmpc_node]: TIME[Tot:5.4 Plan:5.1] Stat:Lattice Iter:7 V:0.89 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515563.484981705] [nmpc_node]: TIME[Tot:5.7 Plan:5.3] Stat:Lattice Iter:7 V:0.89 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515563.529623174] [nmpc_node]: TIME[Tot:5.2 Plan:4.8] Stat:Lattice Iter:7 V:0.89 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.00 
+[nmpc_node-1] [INFO] [1772515563.575048309] [nmpc_node]: TIME[Tot:5.4 Plan:5.0] Stat:Lattice Iter:7 V:0.90 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.05 
+[nmpc_node-1] [INFO] [1772515563.621769680] [nmpc_node]: TIME[Tot:5.6 Plan:5.2] Stat:Lattice Iter:7 V:0.90 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515563.666759765] [nmpc_node]: TIME[Tot:5.5 Plan:5.1] Stat:Lattice Iter:7 V:0.90 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515563.711904342] [nmpc_node]: TIME[Tot:5.4 Plan:5.0] Stat:Lattice Iter:7 V:0.90 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515563.761153918] [nmpc_node]: TIME[Tot:6.0 Plan:5.6] Stat:Lattice Iter:7 V:0.90 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515563.806025335] [nmpc_node]: TIME[Tot:5.5 Plan:5.1] Stat:Lattice Iter:7 V:0.90 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.03 
+[nmpc_node-1] [INFO] [1772515563.850868632] [nmpc_node]: TIME[Tot:5.2 Plan:4.9] Stat:Lattice Iter:7 V:0.90 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.03 
+[nmpc_node-1] [INFO] [1772515563.896375197] [nmpc_node]: TIME[Tot:5.5 Plan:5.1] Stat:Lattice Iter:7 V:0.90 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515563.941408032] [nmpc_node]: TIME[Tot:5.5 Plan:5.1] Stat:Lattice Iter:7 V:0.90 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515563.986979707] [nmpc_node]: TIME[Tot:5.7 Plan:5.4] Stat:Lattice Iter:7 V:0.90 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515564.031785814] [nmpc_node]: TIME[Tot:5.4 Plan:4.9] Stat:Lattice Iter:7 V:0.90 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.05 
+[nmpc_node-1] [INFO] [1772515564.076850684] [nmpc_node]: TIME[Tot:5.3 Plan:4.9] Stat:Lattice Iter:7 V:0.90 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.00 
+[nmpc_node-1] [INFO] [1772515564.123347827] [nmpc_node]: TIME[Tot:5.3 Plan:4.9] Stat:Lattice Iter:7 V:0.90 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515564.169105555] [nmpc_node]: TIME[Tot:5.9 Plan:5.5] Stat:Lattice Iter:7 V:0.90 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515564.213823986] [nmpc_node]: TIME[Tot:5.3 Plan:4.9] Stat:Lattice Iter:7 V:0.90 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.03 
+[nmpc_node-1] [INFO] [1772515564.260871145] [nmpc_node]: TIME[Tot:5.7 Plan:5.3] Stat:Lattice Iter:7 V:0.90 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.03 
+[nmpc_node-1] [INFO] [1772515564.308284657] [nmpc_node]: TIME[Tot:6.0 Plan:5.6] Stat:Lattice Iter:7 V:0.90 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515564.353648262] [nmpc_node]: TIME[Tot:6.0 Plan:5.7] Stat:Lattice Iter:7 V:0.90 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515564.398163339] [nmpc_node]: TIME[Tot:5.3 Plan:5.0] Stat:Lattice Iter:7 V:0.90 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.03 
+[nmpc_node-1] [INFO] [1772515564.443464499] [nmpc_node]: TIME[Tot:5.5 Plan:5.1] Stat:Lattice Iter:7 V:0.90 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515564.488832952] [nmpc_node]: TIME[Tot:5.7 Plan:5.4] Stat:Lattice Iter:7 V:0.90 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515564.535092345] [nmpc_node]: TIME[Tot:5.5 Plan:5.1] Stat:Lattice Iter:7 V:0.90 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.00 
+[nmpc_node-1] [INFO] [1772515564.578846659] [nmpc_node]: TIME[Tot:5.3 Plan:5.0] Stat:Lattice Iter:7 V:0.90 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.05 
+[nmpc_node-1] [INFO] [1772515564.624442220] [nmpc_node]: TIME[Tot:5.6 Plan:5.3] Stat:Lattice Iter:7 V:0.90 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515564.670552115] [nmpc_node]: TIME[Tot:5.3 Plan:5.0] Stat:Lattice Iter:7 V:0.90 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515564.715933746] [nmpc_node]: TIME[Tot:5.6 Plan:5.2] Stat:Lattice Iter:7 V:0.90 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515564.760904407] [nmpc_node]: TIME[Tot:5.4 Plan:5.0] Stat:Lattice Iter:7 V:0.90 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.03 
+[nmpc_node-1] [INFO] [1772515564.809610299] [nmpc_node]: TIME[Tot:5.4 Plan:5.0] Stat:Lattice Iter:7 V:0.90 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.03 
+[nmpc_node-1] [INFO] [1772515564.855609983] [nmpc_node]: TIME[Tot:6.2 Plan:5.9] Stat:Lattice Iter:7 V:0.90 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.03 
+[nmpc_node-1] [INFO] [1772515564.900112937] [nmpc_node]: TIME[Tot:5.4 Plan:5.0] Stat:Lattice Iter:7 V:0.90 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515564.945331650] [nmpc_node]: TIME[Tot:5.4 Plan:5.0] Stat:Lattice Iter:7 V:0.90 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515564.990611992] [nmpc_node]: TIME[Tot:5.6 Plan:5.1] Stat:Lattice Iter:7 V:0.90 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515565.035879397] [nmpc_node]: TIME[Tot:5.6 Plan:5.1] Stat:Lattice Iter:7 V:0.90 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.05 
+[nmpc_node-1] [INFO] [1772515565.080771779] [nmpc_node]: TIME[Tot:5.4 Plan:5.0] Stat:Lattice Iter:7 V:0.90 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.00 
+[nmpc_node-1] [INFO] [1772515565.126354008] [nmpc_node]: TIME[Tot:5.8 Plan:5.4] Stat:Lattice Iter:7 V:0.90 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515565.172436189] [nmpc_node]: TIME[Tot:5.3 Plan:5.0] Stat:Lattice Iter:7 V:0.90 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515565.217476026] [nmpc_node]: TIME[Tot:5.2 Plan:4.8] Stat:Lattice Iter:7 V:0.90 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.03 
+[nmpc_node-1] [INFO] [1772515565.262754175] [nmpc_node]: TIME[Tot:5.3 Plan:4.9] Stat:Lattice Iter:7 V:0.90 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515565.310449980] [nmpc_node]: TIME[Tot:5.3 Plan:4.9] Stat:Lattice Iter:7 V:0.90 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515565.357620921] [nmpc_node]: TIME[Tot:6.2 Plan:5.8] Stat:Lattice Iter:7 V:0.90 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515565.402113250] [nmpc_node]: TIME[Tot:5.5 Plan:5.1] Stat:Lattice Iter:7 V:0.90 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.03 
+[nmpc_node-1] [INFO] [1772515565.446728314] [nmpc_node]: TIME[Tot:5.2 Plan:4.9] Stat:Lattice Iter:7 V:0.90 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515565.492110679] [nmpc_node]: TIME[Tot:5.1 Plan:4.8] Stat:Lattice Iter:7 V:0.90 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515565.537968777] [nmpc_node]: TIME[Tot:5.7 Plan:5.3] Stat:Lattice Iter:7 V:0.90 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.00 
+[nmpc_node-1] [INFO] [1772515565.582679178] [nmpc_node]: TIME[Tot:5.3 Plan:5.0] Stat:Lattice Iter:8 V:1.20 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515565.628375291] [nmpc_node]: TIME[Tot:5.9 Plan:5.5] Stat:Lattice Iter:8 V:1.56 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515565.674432822] [nmpc_node]: TIME[Tot:5.3 Plan:5.0] Stat:Lattice Iter:6 V:1.99 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515565.719539620] [nmpc_node]: TIME[Tot:5.3 Plan:4.9] Stat:Lattice Iter:7 V:2.51 W:0.00 Acc_Raw:1.000 Acc_Comp:1.000 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515565.765816879] [nmpc_node]: TIME[Tot:6.4 Plan:5.8] Stat:Lattice Iter:4 V:3.13 W:0.00 Acc_Raw:-0.293 Acc_Comp:-0.293 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515565.810712264] [nmpc_node]: TIME[Tot:5.4 Plan:5.1] Stat:Lattice Iter:4 V:3.13 W:0.00 Acc_Raw:-0.293 Acc_Comp:-0.293 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515565.858859506] [nmpc_node]: TIME[Tot:5.4 Plan:5.0] Stat:Lattice Iter:7 V:3.72 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515565.904871645] [nmpc_node]: TIME[Tot:6.5 Plan:5.7] Stat:Lattice Iter:6 V:3.72 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515565.950403887] [nmpc_node]: TIME[Tot:6.6 Plan:6.0] Stat:Lattice Iter:8 V:4.35 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515565.994834042] [nmpc_node]: TIME[Tot:6.0 Plan:5.6] Stat:Lattice Iter:7 V:5.10 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.03 
+[nmpc_node-1] [INFO] [1772515566.039884446] [nmpc_node]: TIME[Tot:5.9 Plan:5.1] Stat:Lattice Iter:8 V:6.00 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.03 
+[nmpc_node-1] [INFO] [1772515566.085751478] [nmpc_node]: TIME[Tot:6.4 Plan:5.7] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.03 
+[nmpc_node-1] [INFO] [1772515566.130020546] [nmpc_node]: TIME[Tot:5.6 Plan:5.2] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515566.175870281] [nmpc_node]: TIME[Tot:6.2 Plan:5.8] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515566.221801747] [nmpc_node]: TIME[Tot:5.6 Plan:5.1] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515566.266745222] [nmpc_node]: TIME[Tot:5.3 Plan:4.9] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.00 
+[nmpc_node-1] [INFO] [1772515566.312380507] [nmpc_node]: TIME[Tot:5.8 Plan:5.4] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.00 
+[nmpc_node-1] [INFO] [1772515566.358506953] [nmpc_node]: TIME[Tot:5.6 Plan:5.2] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.00 
+[nmpc_node-1] [INFO] [1772515566.406610398] [nmpc_node]: TIME[Tot:6.1 Plan:5.7] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515566.451032961] [nmpc_node]: TIME[Tot:5.4 Plan:5.0] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515566.496190014] [nmpc_node]: TIME[Tot:5.3 Plan:4.9] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515566.541413039] [nmpc_node]: TIME[Tot:5.3 Plan:5.0] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.03 
+[nmpc_node-1] [INFO] [1772515566.586613124] [nmpc_node]: TIME[Tot:5.4 Plan:5.0] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.03 
+[nmpc_node-1] [INFO] [1772515566.632028381] [nmpc_node]: TIME[Tot:5.6 Plan:5.2] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515566.676884836] [nmpc_node]: TIME[Tot:5.2 Plan:4.8] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515566.723835380] [nmpc_node]: TIME[Tot:5.7 Plan:5.3] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.05 
+[nmpc_node-1] [INFO] [1772515566.768486638] [nmpc_node]: TIME[Tot:5.2 Plan:4.8] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515566.814725260] [nmpc_node]: TIME[Tot:6.2 Plan:5.6] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515566.861312038] [nmpc_node]: TIME[Tot:5.9 Plan:5.5] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515566.907785402] [nmpc_node]: TIME[Tot:5.3 Plan:4.8] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.03 
+[nmpc_node-1] [INFO] [1772515566.952805515] [nmpc_node]: TIME[Tot:5.2 Plan:4.8] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.03 
+[nmpc_node-1] [INFO] [1772515566.998149480] [nmpc_node]: TIME[Tot:5.3 Plan:4.9] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515567.043694850] [nmpc_node]: TIME[Tot:5.5 Plan:5.0] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515567.088675372] [nmpc_node]: TIME[Tot:5.4 Plan:5.0] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515567.133777197] [nmpc_node]: TIME[Tot:5.4 Plan:5.0] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.00 
+[nmpc_node-1] [INFO] [1772515567.179340146] [nmpc_node]: TIME[Tot:5.8 Plan:5.4] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.00 
+[nmpc_node-1] [INFO] [1772515567.224738384] [nmpc_node]: TIME[Tot:6.0 Plan:5.6] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515567.270528646] [nmpc_node]: TIME[Tot:5.3 Plan:4.9] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515567.315896991] [nmpc_node]: TIME[Tot:5.5 Plan:5.1] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515567.360907185] [nmpc_node]: TIME[Tot:5.3 Plan:4.9] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.03 
+[nmpc_node-1] [INFO] [1772515567.409872264] [nmpc_node]: TIME[Tot:5.4 Plan:5.0] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.03 
+[nmpc_node-1] [INFO] [1772515567.454806557] [nmpc_node]: TIME[Tot:5.3 Plan:4.9] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.03 
+[nmpc_node-1] [INFO] [1772515567.500122085] [nmpc_node]: TIME[Tot:5.3 Plan:4.8] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515567.545343198] [nmpc_node]: TIME[Tot:5.6 Plan:5.2] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.05 
+[nmpc_node-1] [INFO] [1772515567.590831203] [nmpc_node]: TIME[Tot:5.5 Plan:5.1] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.05 
+[nmpc_node-1] [INFO] [1772515567.635663420] [nmpc_node]: TIME[Tot:5.4 Plan:5.0] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515567.682571971] [nmpc_node]: TIME[Tot:5.7 Plan:5.3] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515567.726351554] [nmpc_node]: TIME[Tot:5.6 Plan:5.2] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.03 
+[nmpc_node-1] [INFO] [1772515567.772644166] [nmpc_node]: TIME[Tot:5.5 Plan:5.1] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515567.817945116] [nmpc_node]: TIME[Tot:5.5 Plan:5.0] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515567.862846903] [nmpc_node]: TIME[Tot:5.3 Plan:4.9] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515567.910807719] [nmpc_node]: TIME[Tot:5.4 Plan:5.0] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515567.957188353] [nmpc_node]: TIME[Tot:5.8 Plan:5.1] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515568.002743466] [nmpc_node]: TIME[Tot:6.1 Plan:5.4] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.00 
+[nmpc_node-1] [INFO] [1772515568.047387713] [nmpc_node]: TIME[Tot:5.6 Plan:5.0] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515568.092150291] [nmpc_node]: TIME[Tot:5.2 Plan:4.8] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515568.138221552] [nmpc_node]: TIME[Tot:6.1 Plan:5.7] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515568.183301810] [nmpc_node]: TIME[Tot:5.8 Plan:5.4] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515568.228417619] [nmpc_node]: TIME[Tot:6.0 Plan:5.7] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.03 
+[nmpc_node-1] [INFO] [1772515568.274476608] [nmpc_node]: TIME[Tot:5.3 Plan:4.9] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515568.321051672] [nmpc_node]: TIME[Tot:6.4 Plan:6.0] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515568.365004698] [nmpc_node]: TIME[Tot:5.4 Plan:5.0] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.05 
+[nmpc_node-1] [INFO] [1772515568.410107605] [nmpc_node]: TIME[Tot:5.2 Plan:4.8] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.05 
+[nmpc_node-1] [INFO] [1772515568.458799395] [nmpc_node]: TIME[Tot:5.4 Plan:5.0] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.05 
+[nmpc_node-1] [INFO] [1772515568.504173106] [nmpc_node]: TIME[Tot:5.5 Plan:5.1] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515568.549282444] [nmpc_node]: TIME[Tot:5.4 Plan:4.9] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.03 
+[nmpc_node-1] [INFO] [1772515568.594855759] [nmpc_node]: TIME[Tot:5.8 Plan:5.4] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.03 
+[nmpc_node-1] [INFO] [1772515568.639599781] [nmpc_node]: TIME[Tot:5.4 Plan:5.0] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515568.684859337] [nmpc_node]: TIME[Tot:5.4 Plan:5.0] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515568.729982470] [nmpc_node]: TIME[Tot:5.5 Plan:5.1] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515568.775001469] [nmpc_node]: TIME[Tot:5.3 Plan:5.0] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.00 
+[nmpc_node-1] [INFO] [1772515568.822519735] [nmpc_node]: TIME[Tot:6.3 Plan:5.9] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.00 
+[nmpc_node-1] [INFO] [1772515568.867440689] [nmpc_node]: TIME[Tot:6.1 Plan:5.7] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515568.912192219] [nmpc_node]: TIME[Tot:5.6 Plan:5.2] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515568.960804103] [nmpc_node]: TIME[Tot:5.5 Plan:5.1] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515569.006845002] [nmpc_node]: TIME[Tot:6.2 Plan:5.8] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515569.052215781] [nmpc_node]: TIME[Tot:6.4 Plan:5.7] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.03 
+[nmpc_node-1] [INFO] [1772515569.097556128] [nmpc_node]: TIME[Tot:6.5 Plan:5.8] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.03 
+[nmpc_node-1] [INFO] [1772515569.142411556] [nmpc_node]: TIME[Tot:6.2 Plan:5.9] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515569.186911590] [nmpc_node]: TIME[Tot:5.6 Plan:5.3] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515569.232043776] [nmpc_node]: TIME[Tot:5.6 Plan:5.3] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.05 
+[nmpc_node-1] [INFO] [1772515569.277384402] [nmpc_node]: TIME[Tot:5.6 Plan:5.3] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515569.324062415] [nmpc_node]: TIME[Tot:5.9 Plan:5.5] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515569.369577472] [nmpc_node]: TIME[Tot:6.1 Plan:5.8] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.03 
+[nmpc_node-1] [INFO] [1772515569.414994745] [nmpc_node]: TIME[Tot:6.4 Plan:6.0] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.03 
+[nmpc_node-1] [INFO] [1772515569.461345318] [nmpc_node]: TIME[Tot:5.7 Plan:5.3] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.03 
+[nmpc_node-1] [INFO] [1772515569.508253633] [nmpc_node]: TIME[Tot:5.7 Plan:5.3] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515569.554493287] [nmpc_node]: TIME[Tot:6.8 Plan:6.3] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515569.600001805] [nmpc_node]: TIME[Tot:7.2 Plan:6.8] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515569.644030463] [nmpc_node]: TIME[Tot:5.8 Plan:5.4] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.00 
+[nmpc_node-1] [INFO] [1772515569.689208891] [nmpc_node]: TIME[Tot:5.9 Plan:5.5] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.00 
+[nmpc_node-1] [INFO] [1772515569.735514008] [nmpc_node]: TIME[Tot:5.8 Plan:5.4] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515569.779681040] [nmpc_node]: TIME[Tot:6.2 Plan:5.8] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515569.826849438] [nmpc_node]: TIME[Tot:7.1 Plan:6.7] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515569.871415978] [nmpc_node]: TIME[Tot:6.1 Plan:5.7] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.03 
+[nmpc_node-1] [INFO] [1772515569.916495658] [nmpc_node]: TIME[Tot:6.0 Plan:5.6] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.03 
+[nmpc_node-1] [INFO] [1772515569.961691359] [nmpc_node]: TIME[Tot:6.0 Plan:5.6] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515570.010511102] [nmpc_node]: TIME[Tot:6.1 Plan:5.6] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515570.056395411] [nmpc_node]: TIME[Tot:6.8 Plan:6.2] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.05 
+[nmpc_node-1] [INFO] [1772515570.100817386] [nmpc_node]: TIME[Tot:5.9 Plan:5.5] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.05 
+[nmpc_node-1] [INFO] [1772515570.146444913] [nmpc_node]: TIME[Tot:6.4 Plan:5.8] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515570.191510592] [nmpc_node]: TIME[Tot:6.3 Plan:5.9] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515570.236540979] [nmpc_node]: TIME[Tot:6.1 Plan:5.7] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.03 
+[nmpc_node-1] [INFO] [1772515570.281860965] [nmpc_node]: TIME[Tot:6.4 Plan:6.0] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515570.327006428] [nmpc_node]: TIME[Tot:6.2 Plan:5.8] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515570.374003803] [nmpc_node]: TIME[Tot:6.7 Plan:6.3] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515570.418598254] [nmpc_node]: TIME[Tot:6.2 Plan:5.8] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515570.463721240] [nmpc_node]: TIME[Tot:6.1 Plan:5.7] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.00 
+[nmpc_node-1] [INFO] [1772515570.511545133] [nmpc_node]: TIME[Tot:6.1 Plan:5.7] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.00 
+[nmpc_node-1] [INFO] [1772515570.557783818] [nmpc_node]: TIME[Tot:6.2 Plan:5.8] Stat:Lattice Iter:8 V:6.12 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515570.603387910] [nmpc_node]: TIME[Tot:6.8 Plan:6.4] Stat:Lattice Iter:7 V:5.10 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515570.649104485] [nmpc_node]: TIME[Tot:7.0 Plan:6.4] Stat:Lattice Iter:7 V:5.10 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515570.693452471] [nmpc_node]: TIME[Tot:6.2 Plan:5.9] Stat:Lattice Iter:8 V:5.00 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.03 
+[nmpc_node-1] [INFO] [1772515570.738548738] [nmpc_node]: TIME[Tot:6.2 Plan:5.8] Stat:Lattice Iter:7 V:4.90 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515570.784114777] [nmpc_node]: TIME[Tot:6.5 Plan:6.2] Stat:Lattice Iter:7 V:4.80 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.05 
+[nmpc_node-1] [INFO] [1772515570.828754531] [nmpc_node]: TIME[Tot:6.1 Plan:5.8] Stat:Lattice Iter:7 V:4.70 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515570.874339027] [nmpc_node]: TIME[Tot:6.3 Plan:5.9] Stat:Lattice Iter:8 V:4.60 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515570.921409777] [nmpc_node]: TIME[Tot:7.0 Plan:6.6] Stat:Lattice Iter:7 V:4.50 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515570.966076605] [nmpc_node]: TIME[Tot:6.5 Plan:6.1] Stat:Lattice Iter:7 V:4.40 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515571.011205704] [nmpc_node]: TIME[Tot:6.2 Plan:5.9] Stat:Lattice Iter:7 V:4.40 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515571.059828511] [nmpc_node]: TIME[Tot:6.4 Plan:5.8] Stat:Lattice Iter:7 V:4.30 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515571.105091013] [nmpc_node]: TIME[Tot:6.5 Plan:6.1] Stat:Lattice Iter:7 V:4.30 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515571.150437298] [nmpc_node]: TIME[Tot:6.5 Plan:6.1] Stat:Lattice Iter:8 V:4.20 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.00 
+[nmpc_node-1] [INFO] [1772515571.196016997] [nmpc_node]: TIME[Tot:6.9 Plan:6.5] Stat:Lattice Iter:7 V:4.10 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515571.240676739] [nmpc_node]: TIME[Tot:6.4 Plan:6.1] Stat:Lattice Iter:7 V:4.00 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515571.285920535] [nmpc_node]: TIME[Tot:6.5 Plan:6.1] Stat:Lattice Iter:7 V:3.90 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.00 
+[nmpc_node-1] [INFO] [1772515571.331037074] [nmpc_node]: TIME[Tot:6.4 Plan:6.1] Stat:Lattice Iter:7 V:3.80 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515571.376242806] [nmpc_node]: TIME[Tot:6.2 Plan:5.9] Stat:Lattice Iter:6 V:3.70 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515571.422841459] [nmpc_node]: TIME[Tot:6.4 Plan:6.1] Stat:Lattice Iter:7 V:3.60 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515571.468251876] [nmpc_node]: TIME[Tot:6.6 Plan:6.2] Stat:Lattice Iter:8 V:3.50 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.03 
+[nmpc_node-1] [INFO] [1772515571.513560060] [nmpc_node]: TIME[Tot:6.6 Plan:6.3] Stat:Lattice Iter:7 V:3.40 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.00 
+[nmpc_node-1] [INFO] [1772515571.559672977] [nmpc_node]: TIME[Tot:6.3 Plan:5.9] Stat:Lattice Iter:7 V:3.40 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.00 
+[nmpc_node-1] [INFO] [1772515571.607775526] [nmpc_node]: TIME[Tot:6.8 Plan:6.4] Stat:Lattice Iter:6 V:3.30 W:0.00 Acc_Raw:-0.919 Acc_Comp:-0.919 ESO:0.000 CTE:0.03 
+[nmpc_node-1] [INFO] [1772515571.652767424] [nmpc_node]: TIME[Tot:6.5 Plan:6.2] Stat:Lattice Iter:7 V:3.30 W:0.00 Acc_Raw:-1.000 Acc_Comp:-1.000 ESO:0.000 CTE:0.03 
+[nmpc_node-1] [INFO] [1772515571.697918746] [nmpc_node]: TIME[Tot:6.5 Plan:6.1] Stat:Lattice Iter:5 V:3.20 W:0.00 Acc_Raw:-0.800 Acc_Comp:-0.800 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515571.743515385] [nmpc_node]: TIME[Tot:6.8 Plan:6.4] Stat:Lattice Iter:5 V:3.12 W:0.00 Acc_Raw:-0.748 Acc_Comp:-0.748 ESO:0.000 CTE:0.05 
+[nmpc_node-1] [INFO] [1772515571.788250306] [nmpc_node]: TIME[Tot:6.4 Plan:6.1] Stat:Lattice Iter:4 V:3.05 W:0.00 Acc_Raw:-0.557 Acc_Comp:-0.557 ESO:0.000 CTE:0.00 
+[nmpc_node-1] [INFO] [1772515571.833451081] [nmpc_node]: TIME[Tot:6.5 Plan:6.2] Stat:Lattice Iter:4 V:2.99 W:0.00 Acc_Raw:-0.533 Acc_Comp:-0.533 ESO:0.000 CTE:0.05 
+[nmpc_node-1] [INFO] [1772515571.878831034] [nmpc_node]: TIME[Tot:6.4 Plan:6.1] Stat:Lattice Iter:4 V:2.94 W:0.00 Acc_Raw:-0.375 Acc_Comp:-0.375 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515571.925238890] [nmpc_node]: TIME[Tot:6.4 Plan:6.1] Stat:Lattice Iter:4 V:2.90 W:0.00 Acc_Raw:-0.391 Acc_Comp:-0.391 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515571.970567079] [nmpc_node]: TIME[Tot:6.5 Plan:6.2] Stat:Lattice Iter:4 V:2.86 W:0.00 Acc_Raw:-0.255 Acc_Comp:-0.255 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515572.015823216] [nmpc_node]: TIME[Tot:6.4 Plan:6.1] Stat:Lattice Iter:4 V:2.83 W:0.00 Acc_Raw:-0.279 Acc_Comp:-0.279 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515572.061888406] [nmpc_node]: TIME[Tot:6.5 Plan:6.2] Stat:Lattice Iter:4 V:2.83 W:0.00 Acc_Raw:-0.279 Acc_Comp:-0.279 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515572.109919782] [nmpc_node]: TIME[Tot:6.5 Plan:6.2] Stat:Lattice Iter:3 V:2.81 W:0.00 Acc_Raw:-0.161 Acc_Comp:-0.161 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515572.155253488] [nmpc_node]: TIME[Tot:6.7 Plan:6.3] Stat:Lattice Iter:4 V:2.81 W:0.00 Acc_Raw:-0.243 Acc_Comp:-0.243 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515572.200515821] [nmpc_node]: TIME[Tot:6.6 Plan:6.2] Stat:Lattice Iter:4 V:2.79 W:0.00 Acc_Raw:-0.283 Acc_Comp:-0.283 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515572.245410808] [nmpc_node]: TIME[Tot:6.4 Plan:6.1] Stat:Lattice Iter:3 V:2.76 W:0.00 Acc_Raw:-0.161 Acc_Comp:-0.161 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515572.290661787] [nmpc_node]: TIME[Tot:6.2 Plan:6.0] Stat:Lattice Iter:3 V:2.75 W:0.00 Acc_Raw:-0.206 Acc_Comp:-0.206 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515572.336149737] [nmpc_node]: TIME[Tot:6.4 Plan:6.1] Stat:Lattice Iter:3 V:2.73 W:0.00 Acc_Raw:-0.097 Acc_Comp:-0.097 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515572.381342921] [nmpc_node]: TIME[Tot:6.6 Plan:6.3] Stat:Lattice Iter:3 V:2.72 W:0.00 Acc_Raw:-0.143 Acc_Comp:-0.143 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515572.426660589] [nmpc_node]: TIME[Tot:6.7 Plan:6.4] Stat:Lattice Iter:3 V:2.70 W:0.00 Acc_Raw:-0.189 Acc_Comp:-0.189 ESO:0.000 CTE:0.03 
+[nmpc_node-1] [INFO] [1772515572.473004456] [nmpc_node]: TIME[Tot:6.4 Plan:6.1] Stat:Lattice Iter:3 V:2.68 W:0.00 Acc_Raw:-0.079 Acc_Comp:-0.079 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515572.518361604] [nmpc_node]: TIME[Tot:6.4 Plan:6.2] Stat:Lattice Iter:3 V:2.67 W:0.00 Acc_Raw:-0.126 Acc_Comp:-0.126 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515572.563914710] [nmpc_node]: TIME[Tot:6.9 Plan:6.6] Stat:Lattice Iter:3 V:2.66 W:0.00 Acc_Raw:-0.172 Acc_Comp:-0.172 ESO:0.000 CTE:0.03 
+[nmpc_node-1] [INFO] [1772515572.611702101] [nmpc_node]: TIME[Tot:6.4 Plan:6.2] Stat:Lattice Iter:3 V:2.66 W:0.00 Acc_Raw:-0.172 Acc_Comp:-0.172 ESO:0.000 CTE:0.03 
+[nmpc_node-1] [INFO] [1772515572.657486252] [nmpc_node]: TIME[Tot:6.5 Plan:6.2] Stat:Lattice Iter:3 V:2.64 W:0.00 Acc_Raw:-0.063 Acc_Comp:-0.063 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515572.702679663] [nmpc_node]: TIME[Tot:6.4 Plan:6.1] Stat:Lattice Iter:3 V:2.64 W:0.00 Acc_Raw:-0.123 Acc_Comp:-0.123 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515572.749196060] [nmpc_node]: TIME[Tot:7.6 Plan:7.2] Stat:Lattice Iter:3 V:2.63 W:0.00 Acc_Raw:-0.167 Acc_Comp:-0.167 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515572.793393910] [nmpc_node]: TIME[Tot:6.6 Plan:6.3] Stat:Lattice Iter:3 V:2.62 W:0.00 Acc_Raw:-0.057 Acc_Comp:-0.057 ESO:0.000 CTE:0.05 
+[nmpc_node-1] [INFO] [1772515572.838393822] [nmpc_node]: TIME[Tot:6.5 Plan:6.2] Stat:Lattice Iter:3 V:2.61 W:0.00 Acc_Raw:-0.103 Acc_Comp:-0.103 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515572.885066478] [nmpc_node]: TIME[Tot:6.5 Plan:6.2] Stat:Lattice Iter:3 V:2.60 W:0.00 Acc_Raw:-0.148 Acc_Comp:-0.148 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515572.929409465] [nmpc_node]: TIME[Tot:6.9 Plan:6.7] Stat:Lattice Iter:3 V:2.58 W:0.00 Acc_Raw:-0.174 Acc_Comp:-0.174 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515572.975570209] [nmpc_node]: TIME[Tot:6.5 Plan:6.1] Stat:Lattice Iter:3 V:2.57 W:0.00 Acc_Raw:-0.059 Acc_Comp:-0.059 ESO:0.000 CTE:0.03 
+[nmpc_node-1] [INFO] [1772515573.021098886] [nmpc_node]: TIME[Tot:6.8 Plan:6.6] Stat:Lattice Iter:3 V:2.56 W:0.00 Acc_Raw:-0.110 Acc_Comp:-0.110 ESO:0.000 CTE:0.00 
+[nmpc_node-1] [INFO] [1772515573.066347093] [nmpc_node]: TIME[Tot:6.8 Plan:6.6] Stat:Lattice Iter:3 V:2.55 W:0.00 Acc_Raw:-0.141 Acc_Comp:-0.141 ESO:0.000 CTE:0.03 
+[nmpc_node-1] [INFO] [1772515573.111743356] [nmpc_node]: TIME[Tot:6.5 Plan:6.2] Stat:Lattice Iter:3 V:2.55 W:0.00 Acc_Raw:-0.141 Acc_Comp:-0.141 ESO:0.000 CTE:0.03 
+[nmpc_node-1] [INFO] [1772515573.160178415] [nmpc_node]: TIME[Tot:6.6 Plan:6.3] Stat:Lattice Iter:3 V:2.54 W:0.00 Acc_Raw:-0.030 Acc_Comp:-0.030 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515573.205186316] [nmpc_node]: TIME[Tot:6.4 Plan:6.2] Stat:Lattice Iter:3 V:2.54 W:0.00 Acc_Raw:-0.091 Acc_Comp:-0.091 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515573.250312934] [nmpc_node]: TIME[Tot:6.5 Plan:6.2] Stat:Lattice Iter:3 V:2.53 W:0.00 Acc_Raw:-0.136 Acc_Comp:-0.136 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515573.296603389] [nmpc_node]: TIME[Tot:7.4 Plan:7.1] Stat:Lattice Iter:3 V:2.52 W:0.00 Acc_Raw:-0.169 Acc_Comp:-0.169 ESO:0.000 CTE:0.03 
+[nmpc_node-1] [INFO] [1772515573.341080197] [nmpc_node]: TIME[Tot:6.5 Plan:6.2] Stat:Lattice Iter:3 V:2.50 W:0.00 Acc_Raw:-0.050 Acc_Comp:-0.050 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515573.386501998] [nmpc_node]: TIME[Tot:6.7 Plan:6.4] Stat:Lattice Iter:3 V:2.50 W:0.00 Acc_Raw:-0.088 Acc_Comp:-0.088 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515573.431698137] [nmpc_node]: TIME[Tot:6.8 Plan:6.5] Stat:Lattice Iter:3 V:2.49 W:0.00 Acc_Raw:-0.129 Acc_Comp:-0.129 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515573.476591002] [nmpc_node]: TIME[Tot:6.4 Plan:6.2] Stat:Lattice Iter:3 V:2.48 W:0.00 Acc_Raw:-0.150 Acc_Comp:-0.150 ESO:0.000 CTE:0.03 
+[nmpc_node-1] [INFO] [1772515573.524053639] [nmpc_node]: TIME[Tot:7.3 Plan:6.9] Stat:Lattice Iter:3 V:2.46 W:0.00 Acc_Raw:-0.031 Acc_Comp:-0.031 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515573.568694837] [nmpc_node]: TIME[Tot:6.7 Plan:6.4] Stat:Lattice Iter:3 V:2.46 W:0.00 Acc_Raw:-0.080 Acc_Comp:-0.080 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515573.613747268] [nmpc_node]: TIME[Tot:6.5 Plan:6.2] Stat:Lattice Iter:3 V:2.45 W:0.00 Acc_Raw:-0.109 Acc_Comp:-0.109 ESO:0.000 CTE:0.00 
+[nmpc_node-1] [INFO] [1772515573.662488087] [nmpc_node]: TIME[Tot:6.8 Plan:6.5] Stat:Lattice Iter:3 V:2.45 W:0.00 Acc_Raw:-0.109 Acc_Comp:-0.109 ESO:0.000 CTE:0.00 
+[nmpc_node-1] [INFO] [1772515573.707792394] [nmpc_node]: TIME[Tot:6.6 Plan:6.4] Stat:Lattice Iter:3 V:2.44 W:0.00 Acc_Raw:-0.141 Acc_Comp:-0.141 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515573.753191516] [nmpc_node]: TIME[Tot:6.8 Plan:6.5] Stat:Lattice Iter:3 V:2.44 W:0.00 Acc_Raw:-0.185 Acc_Comp:-0.185 ESO:0.000 CTE:0.05 
+[nmpc_node-1] [INFO] [1772515573.798150592] [nmpc_node]: TIME[Tot:6.5 Plan:6.2] Stat:Lattice Iter:3 V:2.42 W:0.00 Acc_Raw:-0.056 Acc_Comp:-0.056 ESO:0.000 CTE:0.03 
+[nmpc_node-1] [INFO] [1772515573.843503062] [nmpc_node]: TIME[Tot:6.5 Plan:6.2] Stat:Lattice Iter:3 V:2.42 W:0.00 Acc_Raw:-0.097 Acc_Comp:-0.097 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515573.888835146] [nmpc_node]: TIME[Tot:6.7 Plan:6.4] Stat:Lattice Iter:3 V:2.41 W:0.00 Acc_Raw:-0.119 Acc_Comp:-0.119 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515577.250867153] [nmpc_node]: TIME[Tot:6.8 Plan:6.6] Stat:Lattice Iter:3 V:2.41 W:0.00 Acc_Raw:-0.170 Acc_Comp:-0.170 ESO:0.000 CTE:0.03 
+[nmpc_node-1] [INFO] [1772515577.296258757] [nmpc_node]: TIME[Tot:6.6 Plan:6.3] Stat:Lattice Iter:3 V:2.39 W:0.00 Acc_Raw:-0.176 Acc_Comp:-0.176 ESO:0.000 CTE:0.05 
+[nmpc_node-1] [INFO] [1772515577.343230408] [nmpc_node]: TIME[Tot:7.2 Plan:6.9] Stat:Lattice Iter:3 V:2.37 W:0.00 Acc_Raw:-0.045 Acc_Comp:-0.045 ESO:0.000 CTE:0.03 
+[nmpc_node-1] [INFO] [1772515577.387210599] [nmpc_node]: TIME[Tot:7.1 Plan:6.8] Stat:Lattice Iter:3 V:2.37 W:0.00 Acc_Raw:-0.085 Acc_Comp:-0.085 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515577.432302169] [nmpc_node]: TIME[Tot:7.0 Plan:6.6] Stat:Lattice Iter:3 V:2.36 W:0.00 Acc_Raw:-0.105 Acc_Comp:-0.105 ESO:0.000 CTE:0.00 
+[nmpc_node-1] [INFO] [1772515577.477207664] [nmpc_node]: TIME[Tot:6.6 Plan:6.3] Stat:Lattice Iter:3 V:2.35 W:0.00 Acc_Raw:-0.131 Acc_Comp:-0.131 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515577.523853470] [nmpc_node]: TIME[Tot:6.7 Plan:6.5] Stat:Lattice Iter:3 V:2.33 W:0.00 Acc_Raw:-0.141 Acc_Comp:-0.141 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515577.569143208] [nmpc_node]: TIME[Tot:6.8 Plan:6.5] Stat:Lattice Iter:3 V:2.32 W:0.00 Acc_Raw:-0.013 Acc_Comp:-0.013 ESO:0.000 CTE:0.05 
+[nmpc_node-1] [INFO] [1772515577.614147997] [nmpc_node]: TIME[Tot:6.5 Plan:6.3] Stat:Lattice Iter:3 V:2.32 W:0.00 Acc_Raw:-0.055 Acc_Comp:-0.055 ESO:0.000 CTE:0.03 
+[nmpc_node-1] [INFO] [1772515577.662011501] [nmpc_node]: TIME[Tot:7.1 Plan:6.8] Stat:Lattice Iter:3 V:2.32 W:0.00 Acc_Raw:-0.055 Acc_Comp:-0.055 ESO:0.000 CTE:0.03 
+[nmpc_node-1] [INFO] [1772515577.708271428] [nmpc_node]: TIME[Tot:6.6 Plan:6.3] Stat:Lattice Iter:3 V:2.31 W:0.00 Acc_Raw:-0.078 Acc_Comp:-0.078 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515577.753658478] [nmpc_node]: TIME[Tot:6.9 Plan:6.6] Stat:Lattice Iter:3 V:2.31 W:0.00 Acc_Raw:-0.122 Acc_Comp:-0.122 ESO:0.000 CTE:0.00 
+[nmpc_node-1] [INFO] [1772515577.798746965] [nmpc_node]: TIME[Tot:6.6 Plan:6.3] Stat:Lattice Iter:3 V:2.31 W:0.00 Acc_Raw:-0.140 Acc_Comp:-0.140 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515577.844790487] [nmpc_node]: TIME[Tot:7.6 Plan:7.3] Stat:Lattice Iter:3 V:2.29 W:0.00 Acc_Raw:-0.155 Acc_Comp:-0.155 ESO:0.000 CTE:0.03 
+[nmpc_node-1] [INFO] [1772515577.889063791] [nmpc_node]: TIME[Tot:6.5 Plan:6.2] Stat:Lattice Iter:3 V:2.28 W:0.00 Acc_Raw:-0.156 Acc_Comp:-0.156 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515577.934374923] [nmpc_node]: TIME[Tot:6.6 Plan:6.3] Stat:Lattice Iter:3 V:2.26 W:0.00 Acc_Raw:-0.020 Acc_Comp:-0.020 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515577.979593435] [nmpc_node]: TIME[Tot:6.6 Plan:6.3] Stat:Lattice Iter:3 V:2.26 W:0.00 Acc_Raw:-0.056 Acc_Comp:-0.056 ESO:0.000 CTE:0.03 
+[nmpc_node-1] [INFO] [1772515578.025763195] [nmpc_node]: TIME[Tot:6.8 Plan:6.5] Stat:Lattice Iter:3 V:2.25 W:0.00 Acc_Raw:-0.074 Acc_Comp:-0.074 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515578.071254717] [nmpc_node]: TIME[Tot:6.5 Plan:6.2] Stat:Lattice Iter:3 V:2.25 W:0.00 Acc_Raw:-0.099 Acc_Comp:-0.099 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515578.116590908] [nmpc_node]: TIME[Tot:6.6 Plan:6.3] Stat:Lattice Iter:3 V:2.24 W:0.00 Acc_Raw:-0.107 Acc_Comp:-0.107 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515578.163183983] [nmpc_node]: TIME[Tot:7.7 Plan:7.3] Stat:Lattice Iter:3 V:2.24 W:0.00 Acc_Raw:-0.107 Acc_Comp:-0.107 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515578.210959488] [nmpc_node]: TIME[Tot:7.0 Plan:6.7] Stat:Lattice Iter:3 V:2.22 W:0.00 Acc_Raw:-0.123 Acc_Comp:-0.123 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515578.253036498] [nmpc_node]: TIME[Tot:6.5 Plan:6.2] Stat:Lattice Iter:3 V:2.22 W:0.00 Acc_Raw:-0.151 Acc_Comp:-0.151 ESO:0.000 CTE:0.03 
+[nmpc_node-1] [INFO] [1772515578.301024092] [nmpc_node]: TIME[Tot:6.5 Plan:6.2] Stat:Lattice Iter:3 V:2.21 W:0.00 Acc_Raw:-0.157 Acc_Comp:-0.157 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515578.346137389] [nmpc_node]: TIME[Tot:6.5 Plan:6.2] Stat:Lattice Iter:3 V:2.19 W:0.00 Acc_Raw:-0.151 Acc_Comp:-0.151 ESO:0.000 CTE:0.05 
+[nmpc_node-1] [INFO] [1772515578.391451987] [nmpc_node]: TIME[Tot:6.5 Plan:6.2] Stat:Lattice Iter:3 V:2.18 W:0.00 Acc_Raw:-0.010 Acc_Comp:-0.010 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515578.436783536] [nmpc_node]: TIME[Tot:6.5 Plan:6.2] Stat:Lattice Iter:3 V:2.18 W:0.00 Acc_Raw:-0.042 Acc_Comp:-0.042 ESO:0.000 CTE:0.03 
+[nmpc_node-1] [INFO] [1772515578.481947676] [nmpc_node]: TIME[Tot:6.5 Plan:6.3] Stat:Lattice Iter:3 V:2.17 W:0.00 Acc_Raw:-0.057 Acc_Comp:-0.057 ESO:0.000 CTE:0.03 
+[nmpc_node-1] [INFO] [1772515578.527251743] [nmpc_node]: TIME[Tot:6.6 Plan:6.3] Stat:Lattice Iter:3 V:2.17 W:0.00 Acc_Raw:-0.079 Acc_Comp:-0.079 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515578.573923928] [nmpc_node]: TIME[Tot:6.7 Plan:6.4] Stat:Lattice Iter:3 V:2.16 W:0.00 Acc_Raw:-0.086 Acc_Comp:-0.086 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515578.619122703] [nmpc_node]: TIME[Tot:6.7 Plan:6.4] Stat:Lattice Iter:3 V:2.15 W:0.00 Acc_Raw:-0.100 Acc_Comp:-0.100 ESO:0.000 CTE:0.00 
+[nmpc_node-1] [INFO] [1772515578.664285012] [nmpc_node]: TIME[Tot:6.6 Plan:6.3] Stat:Lattice Iter:3 V:2.14 W:0.00 Acc_Raw:-0.102 Acc_Comp:-0.102 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515578.711792043] [nmpc_node]: TIME[Tot:6.5 Plan:6.2] Stat:Lattice Iter:3 V:2.14 W:0.00 Acc_Raw:-0.102 Acc_Comp:-0.102 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515578.758282040] [nmpc_node]: TIME[Tot:6.6 Plan:6.3] Stat:Lattice Iter:3 V:2.13 W:0.00 Acc_Raw:-0.112 Acc_Comp:-0.112 ESO:0.000 CTE:0.01 
+[nmpc_node-1] [INFO] [1772515578.803786226] [nmpc_node]: TIME[Tot:6.8 Plan:6.5] Stat:Lattice Iter:3 V:2.13 W:0.00 Acc_Raw:-0.132 Acc_Comp:-0.132 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515578.848751122] [nmpc_node]: TIME[Tot:6.5 Plan:6.2] Stat:Lattice Iter:3 V:2.12 W:0.00 Acc_Raw:-0.139 Acc_Comp:-0.139 ESO:0.000 CTE:0.02 
+[nmpc_node-1] [INFO] [1772515578.893908351] [nmpc_node]: TIME[Tot:6.5 Plan:6.2] Stat:Lattice Iter:3 V:2.11 W:0.00 Acc_Raw:-0.130 Acc_Comp:-0.130 ESO:0.000 CTE:0.03 
+[nmpc_node-1] [INFO] [1772515578.939083801] [nmpc_node]: TIME[Tot:6.4 Plan:6.1] Stat:Lattice Iter:3 V:2.09 W:0.00 Acc_Raw:-0.132 Acc_Comp:-0.132 ESO:0.000 CTE:0.03 
+[nmpc_node-1] [INFO] [1772515578.984088421] [nmpc_node]: TIME[Tot:6.4 Plan:6.1] Stat:Lattice Iter:3 V:2.08 W:0.00 Acc_Raw:-0.122 Acc_Comp:-0.122 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515579.029526093] [nmpc_node]: TIME[Tot:6.6 Plan:6.2] Stat:Lattice Iter:3 V:2.07 W:0.00 Acc_Raw:-0.124 Acc_Comp:-0.124 ESO:0.000 CTE:0.04 
+[nmpc_node-1] [INFO] [1772515579.075947880] [nmpc_node]: TIME[Tot:6.9 Plan:6.6] Stat:Lattice Iter:3 V:2.06 W:0.00 Acc_Raw:-0.114 Acc_Comp:-0.114 ESO:0.000 CTE:0.04 
+[WARNING] [launch]: user interrupted with ctrl-c (SIGINT)
+[nmpc_node-1] [INFO] [1772515579.118329869] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[rviz2-4] [INFO] [1772515579.118363341] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[path_publisher.py-3] Traceback (most recent call last):
+[path_publisher.py-3]   File "/mnt/c/Users/yang/Downloads/Tracker/install/nmpc_tracker/lib/nmpc_tracker/path_publisher.py", line 150, in <module>
+[nmpc_node-1] [INFO] [1772515579.121542352] [nmpc_node]: TIME[Tot:6.6 Plan:6.4] Stat:Lattice Iter:3 V:2.04 W:0.00 Acc_Raw:-0.115 Acc_Comp:-0.115 ESO:0.000 CTE:0.05 
+[path_publisher.py-3]     main()
+[path_publisher.py-3]   File "/mnt/c/Users/yang/Downloads/Tracker/install/nmpc_tracker/lib/nmpc_tracker/path_publisher.py", line 146, in main
+[path_publisher.py-3]     rclpy.spin(GlobalPathPublisher())
+[path_publisher.py-3]   File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/__init__.py", line 229, in spin
+[path_publisher.py-3]     executor.spin_once()
+[path_publisher.py-3]   File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 773, in spin_once
+[path_publisher.py-3]     self._spin_once_impl(timeout_sec)
+[path_publisher.py-3]   File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 768, in _spin_once_impl
+[path_publisher.py-3]     handler()
+[path_publisher.py-3]   File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/task.py", line 254, in __call__
+[path_publisher.py-3]     self._handler.send(None)
+[path_publisher.py-3]   File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 463, in handler
+[path_publisher.py-3]     await call_coroutine(entity, arg)
+[path_publisher.py-3]   File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 371, in _execute_timer
+[path_publisher.py-3]     await await_or_execute(tmr.callback)
+[path_publisher.py-3]   File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 107, in await_or_execute
+[path_publisher.py-3]     return callback(*args)
+[path_publisher.py-3]   File "/mnt/c/Users/yang/Downloads/Tracker/install/nmpc_tracker/lib/nmpc_tracker/path_publisher.py", line 142, in publish_path
+[path_publisher.py-3]     self.pub_path.publish(path_msg)
+[path_publisher.py-3]   File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/publisher.py", line 70, in publish
+[path_publisher.py-3]     self.__publisher.publish(msg)
+[path_publisher.py-3]   File "/opt/ros/humble/local/lib/python3.10/dist-packages/std_msgs/msg/_header.py", line 124, in stamp
+[path_publisher.py-3]     @builtins.property
+[path_publisher.py-3] KeyboardInterrupt
+[simulation.py-2] 
+[simulation.py-2] 
+[simulation.py-2] === 检测到 Ctrl+C，正在打印统计信息 ===
+[simulation.py-2] 
+[simulation.py-2] ============================================================
+[simulation.py-2]               ESO 效果量化评估报告
+[simulation.py-2] ============================================================
+[simulation.py-2] 总运行时间: 18.57 s
+[simulation.py-2] 采样点数: 330
+[simulation.py-2] 
+[simulation.py-2] 【速度跟踪误差】(命令速度 - 实际速度)
+[simulation.py-2]   平均绝对误差 (MAE):  0.3501 m/s
+[simulation.py-2]   均方根误差 (RMSE):   0.5695 m/s
+[simulation.py-2]   最大误差:            1.0200 m/s
+[simulation.py-2]   误差标准差:          0.4879 m/s
+[simulation.py-2] 
+[simulation.py-2] 【扰动期间 vs 无扰动期间对比】
+[simulation.py-2]   无扰动期间:
+[simulation.py-2]     MAE:  0.0000 m/s
+[simulation.py-2]     RMSE: 0.0000 m/s
+[simulation.py-2]   扰动期间:
+[simulation.py-2]     MAE:  0.5399 m/s
+[simulation.py-2]     RMSE: 0.7072 m/s
+[simulation.py-2] 
+[simulation.py-2] 【路径跟踪误差 (CTE)】
+[simulation.py-2]   平均 CTE: 0.0487 m
+[simulation.py-2]   最大 CTE: 0.0997 m
+[simulation.py-2]   CTE 标准差: 0.0296 m
+[simulation.py-2] 
+[simulation.py-2] ============================================================
+[simulation.py-2] 数据已保存到: /root/Tracker_eval_data/eso_eval_20260303_132619.npz
+[simulation.py-2] 
+[simulation.py-2] ============================================================
+[simulation.py-2]               ESO 效果量化评估报告
+[simulation.py-2] ============================================================
+[simulation.py-2] 总运行时间: 18.57 s
+[simulation.py-2] 采样点数: 330
+[simulation.py-2] 
+[simulation.py-2] 【速度跟踪误差】(命令速度 - 实际速度)
+[simulation.py-2]   平均绝对误差 (MAE):  0.3501 m/s
+[simulation.py-2]   均方根误差 (RMSE):   0.5695 m/s
+[simulation.py-2]   最大误差:            1.0200 m/s
+[simulation.py-2]   误差标准差:          0.4879 m/s
+[simulation.py-2] 
+[simulation.py-2] 【扰动期间 vs 无扰动期间对比】
+[simulation.py-2]   无扰动期间:
+[simulation.py-2]     MAE:  0.0000 m/s
+[simulation.py-2]     RMSE: 0.0000 m/s
+[simulation.py-2]   扰动期间:
+[simulation.py-2]     MAE:  0.5399 m/s
+[simulation.py-2]     RMSE: 0.7072 m/s
+[simulation.py-2] 
+[simulation.py-2] 【路径跟踪误差 (CTE)】
+[simulation.py-2]   平均 CTE: 0.0487 m
+[simulation.py-2]   最大 CTE: 0.0997 m
+[simulation.py-2]   CTE 标准差: 0.0296 m
+[simulation.py-2] 
+[simulation.py-2] ============================================================
+[simulation.py-2] 数据已保存到: /root/Tracker_eval_data/eso_eval_20260303_132619.npz
+[ERROR] [path_publisher.py-3]: process has died [pid 17549, exit code -2, cmd '/mnt/c/Users/yang/Downloads/Tracker/install/nmpc_tracker/lib/nmpc_tracker/path_publisher.py --ros-args'].
+[INFO] [nmpc_node-1]: process has finished cleanly [pid 17545]
+[INFO] [simulation.py-2]: process has finished cleanly [pid 17547]
+[INFO] [rviz2-4]: process has finished cleanly [pid 17551]

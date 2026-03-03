@@ -3,14 +3,14 @@
     system:
       performance_mode: False
     nmpc_config:
-      ref_velocity: 5.0             # 期望巡航速度 (m/s)
+      ref_velocity: 3.0             # 期望巡航速度 (m/s)
       control_loop_ms: 50           # 控制循环周期 (毫秒)
       enable_warm_start: False
-      curvature_threshold: 1.0
+      curvature_threshold: 2.0
       global_curvature_weight: 1.0
 
     safety:
-      max_cte_ratio: 10.0     #暂时不开
+      max_cte_ratio: 100000.0     #暂时不开
       recovery_velocity: 0.5
 
     track:
@@ -23,7 +23,7 @@
       fov_half_angle_deg: 100.0     # 机器人前方视野半角 (度)
 
     obstacle_avoidance:
-      base_margin: 2.0              # 基础安全距离/机器人半径 (米)
+      base_margin: 1.5              # 基础安全距离/机器人半径 (米)
 
     robot_limits:
       max_linear_velocity: 5.1      # 最大线速度限制 (m/s)
@@ -32,9 +32,9 @@
       min_angular_velocity: -2.0    # 最小角速度限制 (rad/s)
 
     eso:
-      enable: False
-      omega_linear: 10.0
-      omega_angular: 10.0
+      enable: True
+      omega_linear: 5.0
+      omega_angular: 1.0
       b0_linear: 1.0
       b0_angular: 1.0
       

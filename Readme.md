@@ -95,7 +95,6 @@
 - **NMPC 控制**: 使用 Acados 实现高性能非线性模型预测控制
 - **障碍物感知**: 使用 DBSCAN 聚类进行障碍物检测和追踪
 - **横向规划**: 基于 Lattice 的横向轨迹规划，支持候选轨迹选择
-- **横向规划**: Lattice 横向轨迹规划器
 - **轨迹生成**: GCopter 轨迹规划库，支持 MINCO 轨迹生成和 SFC 走廊约束
 - **两种避障接口**: 基于超平面和基于 SFC 的轨迹追踪
 - **路径平滑**: 基于 FEM 的后端优化，实现平滑轨迹
@@ -191,22 +190,16 @@ python3 test.py
 
 可以通过启动文件或命令行调整关键参数：
 
-### A* 规划参数
+### Lattice 规划参数
 
 | 参数 | 默认值 | 描述 |
 |-----------|---------|-------------|
-| `astar.resolution` | 0.4 | 网格分辨率 (m) |
-| `astar.heuristic_weight` | 1.2 | A* 启发式权重 |
-| `astar.reference_cost_weight` | 2.0 | 参考路径吸引力 |
-| `astar.turning_weight` | 2.5 | 转弯惩罚 |
-
-### 后端优化参数
-
-| 参数 | 默认值 | 描述 |
-|-----------|---------|-------------|
-| `astar.smooth_data_weight` | 0.45 | 数据保真权重 |
-| `astar.smooth_smooth_weight` | 0.35 | 平滑权重 |
-| `astar.smooth_curvature_weight` | 0.35 | 曲率权重 |
+| `lattice.path_resolution` | 0.2 | 路径采样分辨率 (m) |
+| `lattice.lookahead_dist` | 20.0 | 前视距离 (m) |
+| `lattice.num_samples` | 7 | 横向采样数量 |
+| `lattice.sample_width` | 0.5 | 横向采样宽度 (m) |
+| `lattice.max_width` | 3.0 | 最大横向偏移 (m) |
+| `lattice.collision_radius` | 0.8 | 碰撞检测半径 (m) |
 
 ### 障碍物避障接口参数
 

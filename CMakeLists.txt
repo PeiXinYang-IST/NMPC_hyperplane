@@ -104,4 +104,8 @@ install(PROGRAMS
   scripts/rtk_path.py
   DESTINATION lib/${PROJECT_NAME}
 )
+install(FILES
+  scripts/full_ordered_path.txt
+  DESTINATION lib/${PROJECT_NAME}
+)
 ament_package()

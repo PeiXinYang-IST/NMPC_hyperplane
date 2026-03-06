@@ -351,8 +351,8 @@ void NmpcTrackerNode::solve_cycle() {
     // 6.2 动态步长计算 (仅使用全局曲率)
     double total_curve = global_curve_sum;
     double curve_ratio = std::clamp(total_curve / curvature_threshold, 0.0, 1.0);
-    double max_step = 0.3;
-    double min_step = 0.15; 
+    double max_step = 0.35;
+    double min_step = 0.2; 
     double dynamic_step_dist = max_step - curve_ratio * (max_step - min_step); 
     if (dynamic_step_dist < 0.1) dynamic_step_dist = 0.1; 
     

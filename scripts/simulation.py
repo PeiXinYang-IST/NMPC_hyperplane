@@ -74,8 +74,8 @@ class SimulationEnv(Node):
 
         # --- 速度扰动配置 ---
         self.disturbance_intervals = [
-            {'start': 0.0, 'end': 5.0, 'scale': 0.9},   # 10-15s: 0.9倍
-            {'start': 5.0, 'end': 10.0, 'scale': 1.2},  # 15-20s: 1.2倍
+            {'start': 0.0, 'end': 5.0, 'scale': 0.8},   # 10-15s: 0.9倍
+            {'start': 5.0, 'end': 10.0, 'scale': 0.9},  # 15-20s: 1.2倍
         ]
         
         # --- 生成与 Path Publisher 完全一致的赛道 ---

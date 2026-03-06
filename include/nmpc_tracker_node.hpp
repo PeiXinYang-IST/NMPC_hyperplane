@@ -93,9 +93,11 @@ private:
     std::vector<Point> last_guide_path_;
     double last_cmd_acc_ = 0.0;
     double last_cmd_w_acc_ = 0.0;
-    double last_w_cmd_ = 0.0;  // 上一时刻角速度命令（用于计算角加速度） 
+    double last_w_cmd_ = 0.0;  // 上一时刻角速度命令（用于计算角加速度）
+    double last_v_cmd_ = 0.0;  // 上一时刻线速度命令（用于计算线加速度） 
     double cur_x_[3];  // 状态量: [x, y, theta]
     double cur_velocity_ = 0.0;  // 当前线速度 (从 odom 获取)
+    double cur_angular_velocity_ = 0.0;  // 当前角速度 (从 odom 获取)
     nav_msgs::msg::Path full_path_;
     bool odom_ok_ = false;
     bool path_ok_ = false;

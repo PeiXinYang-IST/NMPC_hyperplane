@@ -6,8 +6,8 @@
       ref_velocity: 3.0             # 期望巡航速度 (m/s)
       control_loop_ms: 50           # 控制循环周期 (毫秒)
       enable_warm_start: False
-      curvature_threshold: 2.0
-      global_curvature_weight: 1.0
+      curvature_threshold: 1.0
+      global_curvature_weight: 0.5
 
     safety:
       max_cte_ratio: 100000.0     #暂时不开
@@ -32,8 +32,8 @@
       min_angular_velocity: -2.0    # 最小角速度限制 (rad/s)
 
     eso:
-      enable: True
-      omega_linear: 5.0
+      enable: False
+      omega_linear: 2.0
       omega_angular: 1.0
       b0_linear: 1.0
       b0_angular: 1.0
@@ -48,11 +48,11 @@
       path_resolution: 0.2
       lookahead_dist: 30.0
       num_samples: 500
-      sample_width: 0.1
-      max_width: 50.0
+      sample_width: 0.2
+      max_width: 100.0
       collision_radius: 1.0
       weight_collision: 1000.0
-      weight_offset: 1.0
+      weight_offset: 3.0
       weight_consistency: 4.0
 
     quintic:

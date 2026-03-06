@@ -14,11 +14,11 @@ def export_race_model(n_obstacles=5):
     omega = ca.SX.sym('omega')  # 车辆的角速度 (rad/s)
     state = ca.vertcat(x, y, theta, vx, omega)
     
-    # --- 控制变量 (Controls) ---
+    # --- 控制变量 (Controls) - --
     ax    = ca.SX.sym('ax')     # 纵向加速度 (m/s^2) - 对应油门/刹车
     w     = ca.SX.sym('w')      # 角速度 (rad/s) - 直接控制角速度
     control = ca.vertcat(ax, w)
-
+    
     # --- 运行时参数 (Runtime Parameters) ---
     # 这些参数在每一帧求解前可以动态更新，无需重新编译
     p = []
@@ -87,10 +87,10 @@ def setup_ocp(N_horizon=30, Tf=3.0):
     ocp.model.cost_y_expr_e = ca.vertcat(model.x[0], model.x[1], vx, omega)
     
     # 权重矩阵 W: 对应 cost_y_expr 中每一项的惩罚力度
-    W = np.diag([3.0, 3.0, 1.0, 10.0, 1.0, 3.0, 1.0])
+    W = np.diag([10.0, 10.0, 1.0, 1.0, 1.0, 3.0, 1.0])
     ocp.cost.W = W
     ocp.cost.W_0 = W
-    ocp.cost.W_e = np.diag([5.0, 5.0, 0.1, 10.0]) # 终端权重
+    ocp.cost.W_e = np.diag([10.0, 10.0, 0.1, 1.0]) # 终端权重
     
     # 期望参考值 (Reference): 实际运行时会从外部（如全局路径）更新
     ocp.cost.yref = np.zeros(7)
@@ -103,8 +103,8 @@ def setup_ocp(N_horizon=30, Tf=3.0):
     ocp.constraints.ubx = np.array([7.5, 3.15])  # 速度上限 7, 最大角速度 2.5
     
     ocp.constraints.idxbu = np.array([0, 1])   # 针对 ax, w 设置控制约束
-    ocp.constraints.lbu = np.array([-1.0, -2.5]) # 最大刹车 -1.0, 最小角速度 -2.5
-    ocp.constraints.ubu = np.array([1.0, 2.5])  # 最大加速 1.0, 最大角速度 2.5
+    ocp.constraints.lbu = np.array([-5.0, -2.5]) # 最大刹车 -1.0, 最小角速度 -2.5
+    ocp.constraints.ubu = np.array([5.0, 2.5])  # 最大加速 1.0, 最大角速度 2.5
     
     ocp.constraints.x0 = np.zeros(nx) # 初始状态占位
 
@@ -166,7 +166,7 @@ def setup_ocp(N_horizon=30, Tf=3.0):
 if __name__ == '__main__':
     # 设置 acados 源代码路径环境变量
     if 'ACADOS_SOURCE_DIR' not in os.environ:
-        os.environ['ACADOS_SOURCE_DIR'] = '/mnt/c/Users/yang/Downloads/acados'
+        os.environ['ACADOS_SOURCE_DIR'] = '/home/ubt2204/acados'
 
     print("=== 开始生成 Acados C 代码 (Hyperplane Version) ===")
     ocp = setup_ocp()

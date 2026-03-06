@@ -3,93 +3,104 @@ import rclpy
 from rclpy.node import Node
 from nav_msgs.msg import Path, Odometry
 from geometry_msgs.msg import PoseStamped
+from sensor_msgs.msg import PointCloud2, PointField
 import numpy as np
-
-class TrackGenerator:
-    """ 赛道生成器：支持直线、圆弧拼接 (保持不变) """
-    def __init__(self, resolution=0.1):
-        self.resolution = resolution
-        # 存储航点 [x, y, yaw, cumulative_dist]
-        self.points = [] 
-        self.reset()
-
-    def reset(self):
-        self.points = []
-        self.x = 0.0
-        self.y = 0.0
-        self.yaw = 0.0
-        self.s = 0.0
-        self.points.append([self.x, self.y, self.yaw, self.s])
-
-    def add_straight(self, length):
-        """ 添加直线段 """
-        steps = int(length / self.resolution)
-        for _ in range(steps):
-            self.x += self.resolution * np.cos(self.yaw)
-            self.y += self.resolution * np.sin(self.yaw)
-            self.s += self.resolution
-            self.points.append([self.x, self.y, self.yaw, self.s])
-
-    def add_turn(self, angle_deg, radius, direction='left'):
-        """ 添加圆弧弯道 """
-        angle_rad = np.radians(angle_deg)
-        arc_length = angle_rad * radius
-        steps = int(arc_length / self.resolution)
-        if steps == 0: return
-
-        # 每一步的角度变化量
-        d_yaw = angle_rad / steps
-        if direction == 'right':
-            d_yaw = -d_yaw
-
-        for _ in range(steps):
-            self.yaw += d_yaw
-            self.x += self.resolution * np.cos(self.yaw)
-            self.y += self.resolution * np.sin(self.yaw)
-            self.s += self.resolution
-            self.points.append([self.x, self.y, self.yaw, self.s])
-
-    def get_path(self):
-        return np.array(self.points)
+import os
+import struct
 
 class GlobalPathPublisher(Node):
     def __init__(self):
         super().__init__('global_path_publisher')
-        
+
         # 1. 路径发布者
         self.pub_path = self.create_publisher(Path, '/ref_path', 10)
-        
-        # 2. 里程计订阅者 (获取当前位置)
+
+        # 2. 点云发布者 (左右边界)
+        self.pub_cloud = self.create_publisher(PointCloud2, '/scan_cloud', 10)
+
+        # 3. 里程计订阅者 (获取当前位置)
         self.sub_odom = self.create_subscription(Odometry, '/odom', self.odom_callback, 10)
-        
-        # 3. 定时器 (控制发布频率，例如 10Hz)
-        self.timer = self.create_timer(0.05, self.publish_path) 
-        
-        # 4. 生成赛道
-        self.resolution = 0.1
-        self.track_gen = TrackGenerator(resolution=self.resolution)
-        self.generate_complex_track()
-        
+
+        # 4. 定时器 (控制发布频率，例如 10Hz)
+        self.timer = self.create_timer(0.05, self.publish_path)
+
+        # 5. 读取完整路径文件和边界文件
+        self.load_full_path()
+
         # 状态变量
         self.robot_x = None
         self.robot_y = None
-        self.lookahead_dist = 150.0 # 截取距离 (米)
-        
+        self.lookahead_dist = 150.0  # 截取距离 (米)
+
         self.get_logger().info('Local Window Path Publisher Initialized.')
 
-    def generate_complex_track(self):
-        # ... (赛道生成逻辑保持不变) ...
-        self.track_gen.add_straight(50.0)
-        self.track_gen.add_turn(90, 15.0, 'left')
-        self.track_gen.add_straight(20.0)
-        self.track_gen.add_turn(90, 15.0, 'right')
-        self.track_gen.add_straight(400.0)
-        self.track_gen.add_turn(180, 205.0, 'left')
-        self.track_gen.add_turn(45, 200.0, 'right')
-        self.track_gen.add_turn(45, 200.0, 'left')
-        self.track_gen.add_straight(15000.0)
-        
-        self.track_points = self.track_gen.get_path()
+    def load_full_path(self):
+        """从文件读取完整路径和边界"""
+        # 从环境变量获取工作空间路径
+        ws_path = os.environ.get('AMENT_PREFIX_PATH', '')
+        if ws_path:
+            # 取第一个路径，去掉 install 部分
+            ws_path = ws_path.split('/install/')[0] if '/install/' in ws_path else ws_path
+            scripts_dir = os.path.join(ws_path, 'scripts')
+        else:
+            # 备用：从脚本所在目录获取
+            scripts_dir = os.path.dirname(os.path.abspath(__file__))
+
+        # 中心线文件
+        central_file = os.path.join(scripts_dir, 'full_ordered_path.txt')
+        left_file = os.path.join(scripts_dir, 'left_boundary.txt')
+        right_file = os.path.join(scripts_dir, 'right_boundary.txt')
+
+        self.get_logger().info(f'Loading path from: {central_file}')
+
+        # 读取中心线
+        points = []
+        with open(central_file, 'r') as f:
+            for line in f:
+                parts = line.strip().split()
+                if len(parts) >= 2:
+                    x = float(parts[0])
+                    y = float(parts[1])
+                    points.append([x, y])
+        points = np.array(points)
+
+        # 计算 yaw (航向角) 和累积距离
+        n = len(points)
+        yaws = np.zeros(n)
+        cum_dist = np.zeros(n)
+        for i in range(1, n):
+            dx = points[i, 0] - points[i-1, 0]
+            dy = points[i, 1] - points[i-1, 1]
+            yaws[i] = np.arctan2(dy, dx)
+            cum_dist[i] = cum_dist[i-1] + np.hypot(dx, dy)
+
+        self.track_points = np.column_stack([points, yaws, cum_dist])
+        self.resolution = np.mean(np.diff(cum_dist))
+        self.get_logger().info(f'Loaded {n} central path points, resolution: {self.resolution:.4f} m')
+
+        # 读取左边界
+        self.left_points = self.load_boundary_file(left_file, 'left')
+        # 读取右边界
+        self.right_points = self.load_boundary_file(right_file, 'right')
+
+    def load_boundary_file(self, file_path, name):
+        """加载边界文件"""
+        if not os.path.exists(file_path):
+            self.get_logger().warn(f'{name} boundary file not found: {file_path}')
+            return np.array([])
+
+        points = []
+        with open(file_path, 'r') as f:
+            for line in f:
+                parts = line.strip().split()
+                if len(parts) >= 2:
+                    x = float(parts[0])
+                    y = float(parts[1])
+                    points.append([x, y])
+
+        pts = np.array(points)
+        self.get_logger().info(f'Loaded {len(pts)} {name} boundary points')
+        return pts
 
     def odom_callback(self, msg):
         """ 更新机器人当前位置 """
@@ -140,6 +151,54 @@ class GlobalPathPublisher(Node):
             path_msg.poses.append(pose)
             
         self.pub_path.publish(path_msg)
+
+        # 5. 发布边界点云
+        self.publish_boundary_cloud(closest_idx, end_idx)
+
+    def publish_boundary_cloud(self, start_idx, end_idx):
+        """发布边界点云 (左右边界)"""
+        # 收集边界点 (只取窗口范围内的点)
+        cloud_points = []
+
+        # 左边界点
+        if len(self.left_points) > 0:
+            # 简单处理：取全部或按距离截取
+            for i in range(len(self.left_points)):
+                cloud_points.append(self.left_points[i])
+
+        # 右边界点
+        if len(self.right_points) > 0:
+            for i in range(len(self.right_points)):
+                cloud_points.append(self.right_points[i])
+
+        if not cloud_points:
+            return
+
+        cloud_points = np.array(cloud_points)
+
+        # 创建 PointCloud2 消息
+        cloud_msg = PointCloud2()
+        cloud_msg.header.stamp = self.get_clock().now().to_msg()
+        cloud_msg.header.frame_id = 'map'
+        cloud_msg.height = 1
+        cloud_msg.width = len(cloud_points)
+        cloud_msg.fields = [
+            PointField(name='x', offset=0, datatype=PointField.FLOAT32, count=1),
+            PointField(name='y', offset=4, datatype=PointField.FLOAT32, count=1),
+            PointField(name='z', offset=8, datatype=PointField.FLOAT32, count=1),
+        ]
+        cloud_msg.is_bigendian = False
+        cloud_msg.point_step = 12  # 3 * 4 bytes
+        cloud_msg.row_step = cloud_msg.point_step * cloud_msg.width
+        cloud_msg.is_dense = True
+
+        # 打包点数据
+        buf = bytearray()
+        for pt in cloud_points:
+            buf.extend(struct.pack('fff', float(pt[0]), float(pt[1]), 0.0))
+        cloud_msg.data = bytes(buf)
+
+        self.pub_cloud.publish(cloud_msg)
 
 def main():
     rclpy.init()

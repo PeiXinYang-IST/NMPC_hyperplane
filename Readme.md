@@ -1,24 +1,30 @@
 # NMPC 追踪器
 
-一个基于 ROS2 的非线性模型预测控制（NMPC）追踪器，具有 **A* 路径规划**、**后端优化**、**基于 SFC 的走廊约束** 和 **超平面障碍物避障** 功能。
+一个基于 ROS2 的非线性模型预测控制（NMPC）追踪器，具有 **Lattice 横向规划**、**基于 SFC 的走廊约束**、**超平面障碍物避障** 和 **ESO 扰动估计** 功能。
 
 ## 系统架构
 
-**当前实现**: A* + 后端优化 + SFC 约束 + NMPC
+**当前实现**: RTK 路径 + Lattice 横向规划 + NMPC + ESO
 
 ```
-┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
-│   A* 规划器  │ ──▶│  FEM 平滑   │ ──▶│  SFC 走廊    │ ──▶│    NMPC     │
-│  (全局路径)  │    │ (后端优化)  │    │  (约束条件)  │    │   (控制)    │
-└─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│  RTK 路径   │ ──▶│   Lattice   │ ──▶│    NMPC     │ ──▶│    ESO      │ ──▶│   车辆控制   │
+│ (全局路径)  │    │  (横向规划)  │    │   (纵向控制) │    │  (扰动估计)  │    │             │
+└─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘
+                          │
+                    ┌─────┴─────┐
+                    │  SFC 走廊  │
+                    │ (约束条件)  │
+                    └───────────┘
 ```
 
 **核心组件**:
 
-1. **A* 规划**: 基于网格的全局路径规划器，使用八边形距离启发式
-2. **后端优化**: FEM（有限元法）路径平滑
+1. **路径输入**: 从 ROS 话题接收 RTK 路径（全局路径）
+2. **Lattice 横向规划**: 基于候选轨迹的横向轨迹规划，支持障碍物避让
 3. **SFC 约束**: 用于安全约束的空间填充曲线走廊
-4. **NMPC**: 使用 Acados 的非线性模型预测控制
+4. **NMPC**: 使用 Acados 的非线性模型预测控制（纵向控制）
+5. **ESO**: 扩展状态观测器，用于扰动估计和补偿
 
 ### 关于 SFC
 
@@ -60,19 +66,20 @@
 
 ---
 
-## 当前实现: A* + 后端优化
+## 当前实现: Lattice 横向规划 + NMPC
 
-**当前实现使用 A* 路径规划结合后端优化进行路径平滑:**
+**当前系统使用 Lattice 横向规划结合 NMPC 进行轨迹跟踪:**
 
-- **A* 规划**: 基于网格的全局路径规划器，使用八边形距离启发式
-- **后端优化**: FEM（有限元法）路径平滑，具有可配置的权重:
-  - `smooth_w_data`: 数据保真权重 (0.45)
-  - `smooth_w_smooth`: 平滑权重 (0.40)
-  - `smooth_w_curvature`: 曲率权重 (0.40)
+- **Lattice 横向规划**: 基于候选轨迹的横向规划，采样多个横向偏移轨迹并选择最优路径
+- **NMPC**: 使用 Acados 进行纵向控制，包含以下权重配置:
+  - 位置跟踪权重
+  - 速度跟踪权重
+  - 加速度平滑权重
 
 **关键文件**:
-- `include/astar_planner.hpp` - C++ A* 规划器，带内存池优化
-- `scripts/astar_planner.py` - Python A* 实现
+- `include/lattice_planner.hpp` - C++ Lattice 横向规划器
+- `scripts/planner/generate_c_planner.py` - 规划器 Acados C 代码生成
+- `scripts/controller/generate_c_controller.py` - 控制器 Acados C 代码生成
 
 ## 演示
 
@@ -87,7 +94,9 @@
 
 - **NMPC 控制**: 使用 Acados 实现高性能非线性模型预测控制
 - **障碍物感知**: 使用 DBSCAN 聚类进行障碍物检测和追踪
-- **路径规划**: 带有动态障碍物避障的 A* 全局规划器
+- **横向规划**: 基于 Lattice 的横向轨迹规划，支持候选轨迹选择
+- **横向规划**: Lattice 横向轨迹规划器
+- **轨迹生成**: GCopter 轨迹规划库，支持 MINCO 轨迹生成和 SFC 走廊约束
 - **两种避障接口**: 基于超平面和基于 SFC 的轨迹追踪
 - **路径平滑**: 基于 FEM 的后端优化，实现平滑轨迹
 - **扩展状态观测器 (ESO)**: 基于 ESO 的扰动估计，支持线加速度和角加速度独立补偿
@@ -275,8 +284,15 @@ nmpc_tracker/
 │   ├── sfc_generator.hpp      # SFC 接口
 │   ├── hyperplane_util.hpp    # 超平面接口
 │   ├── astar_planner.hpp      # A* 规划器
+│   ├── lattice_planner.hpp    # 横向规划器
 │   ├── eso.hpp
-│   └── DBSCAN.hpp
+│   ├── DBSCAN.hpp
+│   └── gcopter/               # GCopter 轨迹规划库
+│       ├── gcopter.hpp
+│       ├── flatness.hpp
+│       ├── minco.hpp
+│       ├── sfc_gen.hpp
+│       └── ...
 ├── src/                  # 源文件
 │   ├── nmpc_tracker_node.cpp
 │   ├── sfc_generator.cpp      # SFC 实现
@@ -286,12 +302,25 @@ nmpc_tracker/
 │   ├── path_publisher.py
 │   ├── cubic_spline.py
 │   ├── astar_planner.py       # A* Python 实现
+│   ├── rtk_path.py            # RTK 路径读取
+│   ├── plot_log_trajectory.py # 日志轨迹绘图
 │   ├── sfc_lib/               # SFC Python 库
 │   │   ├── generator.py
 │   │   ├── config.py
 │   │   └── utils.py
+│   ├── controller/             # 控制器 Acados C 代码生成
+│   │   └── generate_c_controller.py
+│   ├── planner/                # 规划器 Acados C 代码生成
+│   │   └── generate_c_planner.py
 │   ├── test.py
 │   └── generate_c.py
+├── datest/               # 数据测试与分析
+│   ├── nihe.py               # 速度映射拟合
+│   ├── niheyaw.py            # 角速度映射拟合
+│   ├── vis_ang.py            # 可视化角度数据
+│   ├── compare_outputs.py    # 输出对比
+│   ├── control.py            # 控制分析
+│   └── deal_path.py          # 路径处理
 ├── launch/               # 启动文件
 ├── pic/                  # 演示视频和图片
 ├── config/
@@ -392,9 +421,37 @@ double dynamic_step_dist = max_step - curve_ratio * (max_step - min_step);
 
 ## 5. 脚本说明
 
+### scripts/ 目录
+
 | 脚本 | 说明 |
 |------|------|
 | `simulation.py` | 仅做仿真，发布 odom 和模拟障碍物点云。**实际跑不要运行！** 我们的 odom 是从 rtk node 中获取的 |
 | `path_publisher.py` | 同上，仅做仿真测试程序是否正常。**实际跑不要运行！** |
 | `rtk_path.py` | 读取 RTK 预先记录的路径，并截取局部路径做发布 |
 | `plot_log_trajectory.py` | 先获取 RTK 的终端 log 数据至 txt 中（格式同 `scripts/log.txt`，不同可修改脚本中的正则表达式），之后运行得到插值之后的 `path.txt`。**这里的 path.txt 要供 rtk_path.py 读取，作为 global path** |
+| `astar_planner.py` | Python 版 A* 路径规划器 |
+| `cubic_spline.py` | 三次样条插值 |
+| `sfc_generator.py` | SFC 走廊生成器 |
+
+### scripts/controller/ 目录
+
+| 脚本 | 说明 |
+|------|------|
+| `generate_c_controller.py` | 控制器 Acados C 代码生成 |
+
+### scripts/planner/ 目录
+
+| 脚本 | 说明 |
+|------|------|
+| `generate_c_planner.py` | 规划器 Acados C 代码生成 |
+
+### datest/ 目录
+
+| 脚本 | 说明 |
+|------|------|
+| `nihe.py` | 速度映射拟合（线性映射: v_out = 3.17 * v_in + 0.10） |
+| `niheyaw.py` | 角速度映射拟合 |
+| `vis_ang.py` | 可视化角度数据 |
+| `compare_outputs.py` | 输出对比分析 |
+| `control.py` | 控制分析脚本 |
+| `deal_path.py` | 路径数据处理 |

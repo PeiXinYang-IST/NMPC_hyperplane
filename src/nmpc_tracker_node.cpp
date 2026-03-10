@@ -866,7 +866,9 @@ void NmpcTrackerNode::render_visualization(
 }
 
 void NmpcTrackerNode::setup_ros_interfaces() {
-    sub_odom_ = create_subscription<nav_msgs::msg::Odometry>("/odom", 10,
+    auto odom_qos_profile  = rclcpp::SensorDataQoS();
+
+    sub_odom_ = create_subscription<nav_msgs::msg::Odometry>("/odom", odom_qos_profile,
         [this](const nav_msgs::msg::Odometry::SharedPtr msg) {
             cur_x_[0] = msg->pose.pose.position.x;
             cur_x_[1] = msg->pose.pose.position.y;

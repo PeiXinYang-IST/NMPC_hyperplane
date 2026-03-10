@@ -150,7 +150,6 @@ source ~/.bashrc
 ### 4. 生成 Acados C 代码
 
 ```bash
-
 # 生成规划器 C 代码
 cd ../planner
 python3 generate_c_planner.py

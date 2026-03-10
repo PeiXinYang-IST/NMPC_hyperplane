@@ -6,8 +6,10 @@
 #include <algorithm>
 #include <limits>
 #include <memory>
-#include <cstring> 
+#include <cstring>
 #include <array>
+#include <chrono>
+#include <iostream>
 
 struct Point2D { double x, y; double yaw; };
 
@@ -46,19 +48,25 @@ public:
     double get_last_best_offset() const { return last_best_offset_; }
     std::vector<CandidatePath> get_last_candidates() const { return last_candidates_; }
 
-    CandidatePath plan(const RobotState& robot, 
-                       const std::vector<Point2D>& global_path, 
-                       const std::vector<Point2D>& obstacles) 
+    CandidatePath plan(const RobotState& robot,
+                       const std::vector<Point2D>& global_path,
+                       const std::vector<Point2D>& obstacles)
     {
+        auto t_start = std::chrono::high_resolution_clock::now();
         last_candidates_.clear();
+
+        auto t1 = std::chrono::high_resolution_clock::now();
         build_local_grid(robot, obstacles);
+        auto t2 = std::chrono::high_resolution_clock::now();
+        std::cout << "[Timing] build_local_grid: " << std::chrono::duration<double, std::milli>(t2-t1).count() << " ms\n";
         
         // 衰减
         if (std::abs(last_best_offset_) > 0.05) { last_best_offset_ *= 0.95; } 
         else { last_best_offset_ = 0.0; }
 
+        auto t3 = std::chrono::high_resolution_clock::now();
         int start_idx = find_closest_index(robot, global_path);
-        
+
         // 采样逻辑
         std::vector<double> offsets;
         offsets.reserve(cfg_.num_samples + 5);
@@ -78,6 +86,9 @@ public:
             for(double o : offsets) if(std::abs(o - last_best_offset_) < 0.01) exists = true;
             if(!exists && std::abs(last_best_offset_) <= cfg_.max_width) offsets.push_back(last_best_offset_);
         }
+
+        auto t4 = std::chrono::high_resolution_clock::now();
+        std::cout << "[Timing] sampling: " << std::chrono::duration<double, std::milli>(t4-t3).count() << " ms\n";
 
         CandidatePath best_path;
         best_path.cost = std::numeric_limits<double>::infinity();
@@ -108,11 +119,18 @@ public:
             }
         }
 
+        auto t5 = std::chrono::high_resolution_clock::now();
+        std::cout << "[Timing] path_generation+collision: " << std::chrono::duration<double, std::milli>(t5-t4).count() << " ms\n";
+
         if (found_valid) {
             last_best_offset_ = best_path.lateral_offset;
+            auto t_end = std::chrono::high_resolution_clock::now();
+            std::cout << "[Timing] total_plan: " << std::chrono::duration<double, std::milli>(t_end-t_start).count() << " ms\n";
             return best_path;
         } else {
             last_best_offset_ = 0.0;
+            auto t_end = std::chrono::high_resolution_clock::now();
+            std::cout << "[Timing] total_plan: " << std::chrono::duration<double, std::milli>(t_end-t_start).count() << " ms\n";
             if(!last_candidates_.empty()) return last_candidates_[0];
             return CandidatePath();
         }

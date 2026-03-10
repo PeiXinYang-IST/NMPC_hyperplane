@@ -25,7 +25,7 @@ extern "C" {
     #include "acados_solver_racing_control_hyperplane.h"
 }
 
-#include "dbscan.hpp"
+#include "DBSCAN.hpp"
 #include "hyperplane_util.hpp"
 #include "nmpc_visualizer.hpp"
 #include "astar_planner.hpp"
@@ -85,6 +85,7 @@ private:
     rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_viz_;
     rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr pub_solve_time_;
     rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr pub_eso_diag_;  // ESO诊断数据
+    rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr pub_filtered_yaw_;  // 滤波后的yaw角
     rclcpp::TimerBase::SharedPtr timer_;
 
     std::mutex cluster_mutex_;
@@ -103,6 +104,13 @@ private:
     bool path_ok_ = false;
     bool is_first_run_ = true;
     double last_filtered_local_curve_ = 0.0;
+
+    // 用于基于位置差分计算yaw角的变量
+    double prev_x_ = 0.0;
+    double prev_y_ = 0.0;
+    double filtered_yaw_ = 0.0;
+    bool yaw_initialized_ = false;
+    rclcpp::Time last_odom_time_;
 
     // 速度观测噪声随机数生成器
     std::mt19937 vel_noise_generator_;

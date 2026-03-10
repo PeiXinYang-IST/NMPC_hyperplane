@@ -34,7 +34,7 @@
     eso:
       enable: False
       omega_linear: 2.0
-      omega_angular: 1.0
+      omega_angular: 0.00001
       b0_linear: 1.0
       b0_angular: 1.0
       

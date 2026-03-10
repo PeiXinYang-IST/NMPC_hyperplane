@@ -4,7 +4,7 @@
 #include <vector>
 #include <cmath>
 #include <algorithm>
-#include "dbscan.hpp"
+#include "DBSCAN.hpp"
 
 struct ObstacleParam { 
     double ox, oy, r, nx, ny; 

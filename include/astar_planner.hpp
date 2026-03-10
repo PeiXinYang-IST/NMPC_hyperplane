@@ -8,7 +8,7 @@
 #include <memory>
 #include <iostream>
 #include <chrono> // [Added] For internal timing
-#include "dbscan.hpp" 
+#include "DBSCAN.hpp" 
 
 // 紧凑的节点结构体
 struct GridNode {
